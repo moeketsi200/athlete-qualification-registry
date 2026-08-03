@@ -4,6 +4,10 @@ pragma solidity ^0.8.20;
 import "./interfaces/IAthleticRegistry.sol";
 
 contract AthleticRegistry is IAthleticRegistry {
+    // --- Custom Errors ---
+    error AthleticRegistry__UnauthorizedOfficial();
+    error AthleticRegistry__InvalidDistance();
+
     enum EventType {
         ShotPut, 
         Discus,
@@ -27,10 +31,10 @@ contract AthleticRegistry is IAthleticRegistry {
     }
         
     // --- State Variables ---
-    // Maps an athlete's wallet address to their profile 
     mapping(address => Athlete) private s_athletes;
-    // Maps an athlete's wallet address to their recorded performance results
     mapping(address => MeetResult[]) private s_athletesResults;
+    mapping(address => bool) private s_authorizedOfficials;
+    address private i_admin;
 
     // --- Events ---
     event AthleteRegistered(address indexed athleteAddress, string athleteId, string name);
@@ -42,12 +46,26 @@ contract AthleticRegistry is IAthleticRegistry {
         address indexed officialAddress
     );
 
+    // --- Modifiers ---
+    modifier onlyOfficial() {
+        if (!s_authorizedOfficials[msg.sender]) {
+            revert AthleticRegistry__UnauthorizedOfficial();
+        }
+        _;
+    }
+
+    constructor() {
+        i_admin = msg.sender;
+        s_authorizedOfficials[msg.sender] = true;
+    }
+
+    function addOfficial(address _official) external {
+        require(msg.sender == i_admin, "Only admin can add officials");
+        s_authorizedOfficials[_official] = true;
+    }
+
     /**
      * @notice Registers a new athlete profile on-chain.
-     * @param athleteAddress The wallet address associated with the athlete.
-     * @param athleteId Unique identifier for the athlete.
-     * @param name Full name of the athlete.
-     * @param nationalIdHash Cryptographic hash of the athlete's national identification document.
      */
     function registerAthlete(
         address athleteAddress,
@@ -70,19 +88,18 @@ contract AthleticRegistry is IAthleticRegistry {
 
     /**
      * @notice Records an official meet performance for a registered athlete.
-     * @param athleteAddress The athlete's wallet address.
-     * @param eventId Unique identifier for the meet/event.
-     * @param eventType Type of event (ShotPut, Discus, Javelin, Other).
-     * @param distanceInMeters Performance distance recorded.
      */
     function recordResult(
         address athleteAddress,
         string memory eventId,
         EventType eventType,
         uint256 distanceInMeters
-    ) external {
-        require(s_athletes[athleteAddress].isRegistered, "Athlete not registered");
-        require(distanceInMeters > 0, "Invalid distance");
+    ) external onlyOfficial {
+        require(s_athletes[athleteAddress].isRegistered, "Athlete is not registered");
+        
+        if (distanceInMeters == 0) {
+            revert AthleticRegistry__InvalidDistance();
+        }
 
         MeetResult memory newResult = MeetResult({
             eventId: eventId,
@@ -105,18 +122,10 @@ contract AthleticRegistry is IAthleticRegistry {
 
     // --- Getter Functions ---
 
-    /**
-     * @notice Fetches the profile details of an athlete.
-     * @param athleteAddress The athlete's wallet address.
-     */
     function getAthlete(address athleteAddress) external view returns (Athlete memory) {
         return s_athletes[athleteAddress];
     }
 
-    /**
-     * @notice Read-only getter returning all logged meet performances for an athlete.
-     * @param athleteAddress The athlete's wallet address.
-     */
     function getAthleteResults(address athleteAddress) external view returns (MeetResult[] memory) {
         return s_athletesResults[athleteAddress];
     }

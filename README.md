@@ -1,128 +1,123 @@
 # 🏆 Decentralized Athletic Qualification Registry
 
-An immutable, transparent, and cryptographically verifiable ledger for regional track and field qualification records—specifically engineered for throwing events (Shot Put, Discus, Javelin). Built with Solidity, Foundry, and React + TypeScript.
+## Overview
+
+Regional track and field qualification records—particularly for throwing events such as shot put, discus, and javelin—frequently suffer from administrative disputes, missing paperwork, or post-event registration disqualifications.
+
+Building an immutable, transparent ledger for official meet results eliminates these grievances. The **Decentralized Athletic Qualification Registry** ensures that once a performance distance is logged by an authorized official, the athlete's qualification status is cryptographically verifiable on-chain and cannot be retroactively or arbitrarily altered by regional management.
 
 ---
 
-## 📌 Problem & Problem Statement
+## Learning Outcomes & Tech Stack
 
-Regional track and field qualification records frequently suffer from administrative disputes, missing paperwork, or post-event registration disqualifications. 
-
-The **Decentralized Athletic Qualification Registry** solves this by storing performance records on an immutable blockchain ledger. Once a distance is logged on-chain by an authorized meet official, the athlete's qualification status is cryptographically verifiable and cannot be retroactively altered by regional management.
-
----
-
-## 🛠️ Architecture & Tech Stack
-
-* **Smart Contracts**: Solidity `^0.8.20` with custom errors (`AthleticRegistry__UnauthorizedOfficial`, `AthleticRegistry__InvalidDistance`) and Role-Based Access Control.
-* **Testing & Toolchain**: Foundry (`forge`) test framework with Solc `0.8.35` and `forge-std`.
-* **Client Frontend**: React 18 + TypeScript + Vite with a glassmorphism dark Web3 design system.
-* **Web3 Integration**: Ethers.js / Viem wallet connectivity targeting `0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496`.
+* **Smart Contract Engineering**: Writing clean, gas-efficient Solidity contracts with robust data structures.
+* **Access Control & Security**: Implementing role-based access control (RBAC) to ensure only verified meet officials can log results.
+* **Automated Testing & Deployment**: Using industry-standard toolchains (Foundry / Hardhat) to write comprehensive unit and integration test suites.
+* **Full-Stack Web3 Integration**: Building a modern React & TypeScript client interface utilizing `viem` / `ethers.js` for seamless wallet connectivity and live contract interaction.
 
 ---
 
-## 📁 Repository Structure
+## Sprint Schedule
+
+Recommended Sprint Window: **3-Day Intensive Sprint** (Targeting August 5 Deadline)
+
+| Day | Focus Area | Deliverable |
+| :--- | :--- | :--- |
+| **Day 1 (Today)** | Foundational Architecture | Core Solidity Data Structures & Base Storage |
+| **Day 2 (Tomorrow)** | Security & Testing | Access Control Modifiers & Foundry Test Suite |
+| **Day 3 (Wednesday)** | Frontend & Deployment | React/TS Client Interface & Vercel Live Demo |
+
+---
+
+## Project Structure
 
 ```text
 athlete-qualification-registry/
 │
 ├── contracts/
 │   ├── src/
-│   │   ├── AthleticRegistry.sol           # Core smart contract
+│   │   ├── AthleticRegistry.sol
 │   │   └── interfaces/
-│   │       └── IAthleticRegistry.sol      # Contract interface
+│   │       └── IAthleticRegistry.sol
 │   │
 │   ├── script/
-│   │   └── DeployAthleticRegistry.s.sol   # Foundry deployment script
+│   │   └── DeployAthleticRegistry.s.sol
 │   │
 │   └── test/
-│       └── AthleticRegistry.t.sol         # Foundry test suite (3/3 passing)
+│       └── AthleticRegistry.t.sol
 │
 ├── frontend/
 │   ├── src/
-│   │   ├── components/                    # Navbar, HeroSection, QualificationLookup, OfficialDashboard
-│   │   ├── hooks/                         # useWeb3Registry custom hook
-│   │   ├── config/                        # Contract address & ABI configuration
-│   │   ├── types/                         # TypeScript interfaces (Athlete, MeetResult, EventType)
-│   │   ├── App.tsx                        # Main React application
-│   │   ├── main.tsx                       # Entry point
-│   │   └── index.css                      # Glassmorphism design system
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── config/
+│   │   ├── App.tsx
+│   │   └── main.tsx
 │   ├── package.json
-│   ├── tsconfig.json
-│   └── vite.config.ts
+│   └── tsconfig.json
 │
-├── foundry.toml                           # Foundry project configuration
+├── foundry.toml
 └── README.md
 ```
 
 ---
 
-## 🚀 Iterative Build Plan
+## Implementation Plan
 
-### Iteration 1: Core Solidity Data Structures
-- Defined `Athlete` and `MeetResult` structs.
-- Implemented `registerAthlete(...)`, `recordResult(...)`, `getAthlete(...)`, and `getAthleteResults(...)`.
+### Step 1 — Core Solidity Data Structures (Iteration 1)
 
-### Iteration 2: Access Control, Custom Errors & Foundry Tests
-- Integrated Role-Based Access Control (`i_admin` & `s_authorizedOfficials`).
-- Applied `onlyOfficial` modifier to restrict result logging.
-- Created gas-efficient custom errors:
-  - `AthleticRegistry__UnauthorizedOfficial()`
-  - `AthleticRegistry__InvalidDistance()`
-- Wrote 100% passing Foundry test suite in `contracts/test/AthleticRegistry.t.sol`.
+**File**: `contracts/src/AthleticRegistry.sol`
 
-### Iteration 3: Client Interface & Web3 Integration
-- Built modern Web3 React + TypeScript frontend in `frontend/`.
-- Integrated Web3 wallet connection, searchable qualification lookup directory, and official management portal.
+Construct the foundational smart contract managing athlete profiles and official meet performances.
 
----
+#### Data Structures
 
-## 🧪 Testing & Smart Contract Verification
+* **`Athlete`** (Struct): Stores athlete metadata (e.g., `athleteId`, `name`, `nationalIdHash`, `isRegistered`).
+* **`MeetResult`** (Struct): Represents an official event performance entry:
+  * `eventId` (`bytes32` / `string`)
+  * `eventType` (`enum` or `string` e.g., Shot Put, Discus, Javelin)
+  * `distanceInMeters` (`uint256`)
+  * `timestamp` (`uint256`)
+  * `officialAddress` (`address`)
 
-### Compile Contracts
-```bash
-forge build
-```
+#### Key Functions
 
-### Run Foundry Test Suite
-```bash
-forge test -vvv
-```
-
-**Test Results (3/3 Passed)**:
-```text
-Ran 3 tests for contracts/test/AthleticRegistry.t.sol:AthleticRegistryTest
-[PASS] testOfficialCanRecordResult() (gas: 144090)
-[PASS] testRevertsIfDistanceIsZero() (gas: 19820)
-[PASS] testRevertsIfNonOfficialRecordsResult() (gas: 17598)
-Suite result: ok. 3 passed; 0 failed; 0 skipped
-```
-
-### Run Deployment Script Simulation
-```bash
-forge script contracts/script/DeployAthleticRegistry.s.sol:DeployAthleticRegistry
-```
+* `registerAthlete(...)`: Register a new athlete onto the ledger.
+* `recordResult(...)`: Log an official distance performance for a given athlete.
+* `getAthleteResults(...)`: Read-only getter function returning all logged meet performances for an athlete.
 
 ---
 
-## 💻 Running the Frontend Locally
+### Step 2 — Access Control & Security (Iteration 2)
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+**Files**: `contracts/src/AthleticRegistry.sol`, `contracts/test/AthleticRegistry.t.sol`
+
+Enforce protocol security by restricting data entry exclusively to authorized addresses ("Officials") and verifying contract execution through automated testing.
+
+#### Security & Access Modifiers
+
+* Integrate Role-Based Access Control (e.g., custom `onlyOfficial` / `onlyAdmin` modifiers).
+* Ensure unauthorized addresses are prohibited from calling `recordResult` and throw descriptive custom errors (e.g., `AthleticRegistry__UnauthorizedOfficial()`).
+
+#### Testing & Deployment Suite
+
+* Write unit tests covering boundary conditions:
+  * Valid result entry by authorized official.
+  * Revert on result entry attempt by non-official address.
+  * Revert on invalid distance values (e.g., zero distance).
+* Implement automated deployment scripts using Foundry (`forge script`) or Hardhat.
 
 ---
 
-## 📝 License
+### Step 3 — Client Interface & Web3 Integration (Iteration 3)
 
-Distributed under the MIT License.
+**Directory**: `frontend/`
+
+Spin up a modern, responsive web application enabling athletes, officials, and event organizers to view and verify qualification records transparently.
+
+#### Frontend Features
+
+* **Wallet Connection**: Integrated Web3 wallet connection (via Wagmi / Viem / Ethers.js).
+* **Official Dashboard**: Dedicated form for verified officials to log new meet results on-chain.
+* **Qualification Lookup**: Searchable athlete directory rendering cryptographically verified performance histories.
+* **Live Deployment**: Hosted on Vercel with direct testnet contract integration.

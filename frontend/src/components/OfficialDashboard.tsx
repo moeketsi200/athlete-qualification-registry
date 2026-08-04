@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { ShieldCheck, PlusCircle, UserPlus, AlertTriangle, CheckCircle2, Lock, Flame } from 'lucide-react';
-import { Athlete, EventType, EventTypeNames, WalletState } from '../types/registry';
+import { ShieldCheck, PlusCircle, UserPlus, AlertTriangle, CheckCircle2, Lock, Flame, Copy, Check, Users, Award } from 'lucide-react';
+import { Athlete, MeetResult, EventType, EventTypeNames, WalletState, OfficialInfo } from '../types/registry';
 
 interface OfficialDashboardProps {
   wallet: WalletState;
   athletes: Record<string, Athlete>;
-  recordResult: (athleteAddr: string, eventId: string, type: EventType, dist: number) => Promise<any>;
-  registerAthlete: (addr: string, id: string, name: string, hash: string) => Promise<any>;
-  addOfficial: (addr: string) => Promise<any>;
+  officials?: OfficialInfo[];
+  recordResult: (athleteAddr: string, eventId: string, type: EventType, dist: number) => Promise<MeetResult | void>;
+  registerAthlete: (addr: string, id: string, name: string, hash: string) => Promise<Athlete | void>;
+  addOfficial: (addr: string) => Promise<void>;
   isProcessing: boolean;
   txMessage: string | null;
 }
@@ -15,6 +16,7 @@ interface OfficialDashboardProps {
 export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
   wallet,
   athletes,
+  officials = [],
   recordResult,
   registerAthlete,
   addOfficial,
@@ -22,6 +24,7 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
   txMessage
 }) => {
   const [activeTab, setActiveTab] = useState<'RECORD' | 'REGISTER' | 'ADMIN'>('RECORD');
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
   // Record Result Form State
   const [selectedAthleteAddr, setSelectedAthleteAddr] = useState('');
@@ -62,8 +65,8 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
       await recordResult(selectedAthleteAddr, eventId, eventType, distNum);
       setEventId('');
       setDistance('');
-    } catch (err: any) {
-      setFormError(err.message || "Transaction failed");
+    } catch (err: unknown) {
+      setFormError((err as Error).message || "Transaction failed");
     }
   };
 
@@ -86,8 +89,8 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
       setNewAthleteId('');
       setNewAthleteName('');
       setNewNationalIdHash('');
-    } catch (err: any) {
-      setFormError(err.message || "Failed to register athlete.");
+    } catch (err: unknown) {
+      setFormError((err as Error).message || "Failed to register athlete.");
     }
   };
 
@@ -103,9 +106,15 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
     try {
       await addOfficial(newOfficialAddr);
       setNewOfficialAddr('');
-    } catch (err: any) {
-      setFormError(err.message || "Failed to add official.");
+    } catch (err: unknown) {
+      setFormError((err as Error).message || "Failed to add official.");
     }
+  };
+
+  const handleCopy = (addr: string) => {
+    navigator.clipboard.writeText(addr);
+    setCopiedAddress(addr);
+    setTimeout(() => setCopiedAddress(null), 2000);
   };
 
   return (
@@ -199,7 +208,7 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
           onClick={() => setActiveTab('ADMIN')}
           className={activeTab === 'ADMIN' ? 'btn-gold' : 'btn-secondary'}
         >
-          <ShieldCheck size={18} /> Manage Officials
+          <ShieldCheck size={18} /> Manage Officials ({officials.length})
         </button>
       </div>
 
@@ -363,35 +372,142 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
 
       {/* Tab 3: Manage Officials */}
       {activeTab === 'ADMIN' && (
-        <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ShieldCheck color="#f59e0b" size={20} />
-            Authorize Meet Official (`addOfficial`)
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-            Admin function granting logging privileges to a meet official's wallet address.
-          </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          
+          {/* Add Official Form Card */}
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ShieldCheck color="#f59e0b" size={20} />
+              Authorize Meet Official (`addOfficial`)
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              Admin function granting logging privileges to a meet official's wallet address.
+            </p>
 
-          <form onSubmit={handleAddOfficialSubmit} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: '280px' }}>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="Official Wallet Address (0x...)"
-                value={newOfficialAddr}
-                onChange={e => setNewOfficialAddr(e.target.value)}
-                required
-              />
+            <form onSubmit={handleAddOfficialSubmit} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '280px' }}>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="Official Wallet Address (0x...)"
+                  value={newOfficialAddr}
+                  onChange={e => setNewOfficialAddr(e.target.value)}
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="btn-gold"
+                disabled={isProcessing}
+                style={{ minWidth: '180px', justifyContent: 'center' }}
+              >
+                {isProcessing ? "Authorizing..." : "Grant Official Role"}
+              </button>
+            </form>
+          </div>
+
+          {/* Authorized Officials Registry Card */}
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Users color="#38bdf8" size={22} />
+                  Authorized Meet Officials (`getOfficials()`)
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                  On-chain list of addresses granted <code style={{ color: '#34d399' }}>onlyOfficial</code> rights to cryptographically sign meet records.
+                </p>
+              </div>
+
+              <span className="badge badge-cyan" style={{ fontSize: '0.85rem', padding: '0.4rem 0.85rem' }}>
+                <ShieldCheck size={14} /> {officials.length} Active Officials Registered
+              </span>
             </div>
-            <button
-              type="submit"
-              className="btn-gold"
-              disabled={isProcessing}
-              style={{ minWidth: '180px', justifyContent: 'center' }}
-            >
-              {isProcessing ? "Authorizing..." : "Grant Official Role"}
-            </button>
-          </form>
+
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
+                    <th style={{ padding: '0.85rem 1rem' }}>Wallet Address</th>
+                    <th style={{ padding: '0.85rem 1rem' }}>Contract Role & Title</th>
+                    <th style={{ padding: '0.85rem 1rem' }}>Modifier Status</th>
+                    <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {officials.map((official, idx) => (
+                    <tr 
+                      key={official.address + idx} 
+                      style={{ 
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        transition: 'background 0.2s ease'
+                      }}
+                    >
+                      <td style={{ padding: '1rem', fontFamily: 'monospace', fontWeight: 600 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ color: '#38bdf8' }}>
+                            {official.address.slice(0, 8)}...{official.address.slice(-6)}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {official.isAdmin ? (
+                            <span className="badge badge-gold" style={{ fontSize: '0.75rem' }}>
+                              <Award size={12} /> Contract Admin
+                            </span>
+                          ) : (
+                            <span className="badge badge-cyan" style={{ fontSize: '0.75rem' }}>
+                              <ShieldCheck size={12} /> Meet Official
+                            </span>
+                          )}
+                          <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                            {official.title || 'Authorized Meet Official'}
+                          </span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '1rem' }}>
+                        <span className="badge badge-green" style={{ fontSize: '0.75rem' }}>
+                          <CheckCircle2 size={12} /> Authorized (`onlyOfficial`)
+                        </span>
+                      </td>
+                      <td style={{ padding: '1rem', textAlign: 'right' }}>
+                        <button
+                          onClick={() => handleCopy(official.address)}
+                          title="Copy Full Address"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            border: '1px solid var(--border-glass)',
+                            color: copiedAddress === official.address ? '#34d399' : 'var(--text-primary)',
+                            padding: '0.4rem 0.75rem',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem',
+                            fontSize: '0.8rem',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          {copiedAddress === official.address ? (
+                            <>
+                              <Check size={14} /> Copied
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={14} /> Copy Address
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+
         </div>
       )}
 

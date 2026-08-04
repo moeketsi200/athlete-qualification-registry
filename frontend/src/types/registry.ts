@@ -37,3 +37,11 @@ export interface WalletState {
   balance: string;
   networkName: string;
 }
+
+export interface OfficialInfo {
+  address: string;
+  isAdmin: boolean;
+  title?: string;
+  addedTimestamp?: number;
+}
+

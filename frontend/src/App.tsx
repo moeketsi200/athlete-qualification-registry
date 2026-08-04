@@ -14,6 +14,7 @@ export default function App() {
     toggleOfficialRole,
     athletes,
     results,
+    officials,
     registerAthlete,
     recordResult,
     addOfficial,
@@ -107,6 +108,7 @@ export default function App() {
           <OfficialDashboard
             wallet={wallet}
             athletes={athletes}
+            officials={officials}
             recordResult={recordResult}
             registerAthlete={registerAthlete}
             addOfficial={addOfficial}

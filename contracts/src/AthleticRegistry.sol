@@ -34,6 +34,7 @@ contract AthleticRegistry is IAthleticRegistry {
     mapping(address => Athlete) private s_athletes;
     mapping(address => MeetResult[]) private s_athletesResults;
     mapping(address => bool) private s_authorizedOfficials;
+    address[] private s_officials;
     address private i_admin;
 
     // --- Events ---
@@ -57,11 +58,18 @@ contract AthleticRegistry is IAthleticRegistry {
     constructor() {
         i_admin = msg.sender;
         s_authorizedOfficials[msg.sender] = true;
+        s_officials.push(msg.sender);
+        emit OfficialAdded(msg.sender);
     }
 
     function addOfficial(address _official) external {
         require(msg.sender == i_admin, "Only admin can add officials");
-        s_authorizedOfficials[_official] = true;
+        require(_official != address(0), "Invalid Official Address");
+        if (!s_authorizedOfficials[_official]) {
+            s_authorizedOfficials[_official] = true;
+            s_officials.push(_official);
+            emit OfficialAdded(_official);
+        }
     }
 
     /**
@@ -128,5 +136,13 @@ contract AthleticRegistry is IAthleticRegistry {
 
     function getAthleteResults(address athleteAddress) external view returns (MeetResult[] memory) {
         return s_athletesResults[athleteAddress];
+    }
+
+    function getOfficials() external view returns (address[] memory) {
+        return s_officials;
+    }
+
+    function isOfficial(address officialAddress) external view returns (bool) {
+        return s_authorizedOfficials[officialAddress];
     }
 }

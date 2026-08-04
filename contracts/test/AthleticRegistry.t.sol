@@ -53,4 +53,15 @@ contract AthleticRegistryTest is Test {
         vm.expectRevert(AthleticRegistry.AthleticRegistry__InvalidDistance.selector);
         registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 0);
     }
+
+    // TEST 4: Get List of Officials
+    function testGetOfficials() public view {
+        address[] memory officials = registry.getOfficials();
+        assertEq(officials.length, 2); // admin and official1
+        assertEq(officials[0], admin);
+        assertEq(officials[1], official1);
+        assertTrue(registry.isOfficial(admin));
+        assertTrue(registry.isOfficial(official1));
+        assertFalse(registry.isOfficial(badActor));
+    }
 }

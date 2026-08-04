@@ -1,6 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Athlete, MeetResult, EventType, WalletState } from '../types/registry';
+import { useState, useCallback } from 'react';
+import { Athlete, MeetResult, EventType, WalletState, OfficialInfo } from '../types/registry';
 import { CONTRACT_ADDRESS } from '../config/contractConfig';
+
+// Declare Ethereum global window interface for strict TypeScript health
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+    };
+  }
+}
 
 // Initial pre-populated data for demonstration & live interaction
 const INITIAL_ATHLETES: Record<string, Athlete> = {
@@ -68,6 +77,21 @@ const INITIAL_RESULTS: Record<string, MeetResult[]> = {
   ]
 };
 
+const INITIAL_OFFICIALS_LIST: OfficialInfo[] = [
+  {
+    address: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd',
+    isAdmin: true,
+    title: 'Lead Meet Director & Contract Admin',
+    addedTimestamp: Math.floor(Date.now() / 1000) - 86400 * 30
+  },
+  {
+    address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+    isAdmin: false,
+    title: 'Regional Technical Delegate (Anvil Account #0)',
+    addedTimestamp: Math.floor(Date.now() / 1000) - 86400 * 12
+  }
+];
+
 const OFFICIALS = new Set<string>([
   '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd',
   '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
@@ -86,15 +110,16 @@ export function useWeb3Registry() {
   const [athletes, setAthletes] = useState<Record<string, Athlete>>(INITIAL_ATHLETES);
   const [results, setResults] = useState<Record<string, MeetResult[]>>(INITIAL_RESULTS);
   const [authorizedOfficials, setAuthorizedOfficials] = useState<Set<string>>(OFFICIALS);
+  const [officialsList, setOfficialsList] = useState<OfficialInfo[]>(INITIAL_OFFICIALS_LIST);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [txMessage, setTxMessage] = useState<string | null>(null);
 
   // Connect / Disconnect Wallet simulation & browser extension hook
   const connectWallet = useCallback(async () => {
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
+    if (typeof window !== 'undefined' && window.ethereum) {
       try {
-        const accounts = await (window as any).ethereum.request({ method: 'eth_requestAccounts' });
+        const accounts = (await window.ethereum.request({ method: 'eth_requestAccounts' })) as string[];
         if (accounts && accounts.length > 0) {
           const addr = accounts[0];
           setWallet({
@@ -107,7 +132,7 @@ export function useWeb3Registry() {
           });
           return;
         }
-      } catch (err) {
+      } catch {
         console.warn("User rejected Web3 connection or extension unavailable, using demo wallet.");
       }
     }
@@ -233,8 +258,25 @@ export function useWeb3Registry() {
     setTxMessage("Adding authorized official on-chain...");
 
     await new Promise(resolve => setTimeout(resolve, 1000));
-    setAuthorizedOfficials(prev => new Set(prev).add(officialAddr.toLowerCase()).add(officialAddr));
+    const formattedAddr = officialAddr.trim();
+
+    setAuthorizedOfficials(prev => new Set(prev).add(formattedAddr.toLowerCase()).add(formattedAddr));
     
+    setOfficialsList(prev => {
+      if (prev.some(o => o.address.toLowerCase() === formattedAddr.toLowerCase())) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          address: formattedAddr,
+          isAdmin: false,
+          title: 'Authorized Meet Official',
+          addedTimestamp: Math.floor(Date.now() / 1000)
+        }
+      ];
+    });
+
     setIsProcessing(false);
     setTxMessage("Official successfully authorized!");
     setTimeout(() => setTxMessage(null), 3000);
@@ -246,6 +288,7 @@ export function useWeb3Registry() {
     toggleOfficialRole,
     athletes,
     results,
+    officials: officialsList,
     registerAthlete,
     recordResult,
     addOfficial,

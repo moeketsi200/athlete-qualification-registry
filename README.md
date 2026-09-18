@@ -1,5 +1,6 @@
 # 🏆 Decentralized Athletic Qualification Registry
 
+Verification code: WTC-3J4EDMA2
 An immutable, transparent, and cryptographically verifiable ledger for regional track and field qualification records—specifically engineered for throwing events (Shot Put, Discus, Javelin). Built with Solidity, Foundry, and React + TypeScript.
 
 ---

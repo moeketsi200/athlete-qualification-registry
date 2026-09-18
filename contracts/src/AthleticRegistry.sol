@@ -9,9 +9,9 @@ contract AthleticRegistry is IAthleticRegistry {
     error AthleticRegistry__InvalidDistance();
 
     enum EventType {
-        ShotPut, 
+        ShotPut,
         Discus,
-        Javelin, 
+        Javelin,
         Other
     }
 
@@ -29,7 +29,7 @@ contract AthleticRegistry is IAthleticRegistry {
         uint256 timestamp;
         address officialAddress;
     }
-        
+
     // --- State Variables ---
     mapping(address => Athlete) private s_athletes;
     mapping(address => MeetResult[]) private s_athletesResults;
@@ -84,12 +84,8 @@ contract AthleticRegistry is IAthleticRegistry {
         require(athleteAddress != address(0), "Invalid Athlete Address");
         require(!s_athletes[athleteAddress].isRegistered, "Athlete already registered");
 
-        s_athletes[athleteAddress] = Athlete({
-            athleteId: athleteId,
-            name: name,
-            nationalIdHash: nationalIdHash,
-            isRegistered: true
-        });
+        s_athletes[athleteAddress] =
+            Athlete({athleteId: athleteId, name: name, nationalIdHash: nationalIdHash, isRegistered: true});
 
         emit AthleteRegistered(athleteAddress, athleteId, name);
     }
@@ -97,14 +93,12 @@ contract AthleticRegistry is IAthleticRegistry {
     /**
      * @notice Records an official meet performance for a registered athlete.
      */
-    function recordResult(
-        address athleteAddress,
-        string memory eventId,
-        EventType eventType,
-        uint256 distanceInMeters
-    ) external onlyOfficial {
+    function recordResult(address athleteAddress, string memory eventId, EventType eventType, uint256 distanceInMeters)
+        external
+        onlyOfficial
+    {
         require(s_athletes[athleteAddress].isRegistered, "Athlete is not registered");
-        
+
         if (distanceInMeters == 0) {
             revert AthleticRegistry__InvalidDistance();
         }
@@ -119,13 +113,7 @@ contract AthleticRegistry is IAthleticRegistry {
 
         s_athletesResults[athleteAddress].push(newResult);
 
-        emit ResultRecorded(
-            athleteAddress,
-            eventId,
-            eventType,
-            distanceInMeters,
-            msg.sender
-        );
+        emit ResultRecorded(athleteAddress, eventId, eventType, distanceInMeters, msg.sender);
     }
 
     // --- Getter Functions ---

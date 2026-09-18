@@ -6,7 +6,7 @@ import {AthleticRegistry} from "../src/AthleticRegistry.sol";
 
 contract AthleticRegistryTest is Test {
     AthleticRegistry public registry;
-    
+
     // Create fake wallet addresses for testing
     address public admin = makeAddr("admin");
     address public official1 = makeAddr("official1");
@@ -40,16 +40,16 @@ contract AthleticRegistryTest is Test {
     // TEST 2: Boundary - Bad Actor gets stopped
     function testRevertsIfNonOfficialRecordsResult() public {
         vm.prank(badActor);
-        
+
         vm.expectRevert(AthleticRegistry.AthleticRegistry__UnauthorizedOfficial.selector);
-        
+
         registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 1855);
     }
 
     // TEST 3: Boundary - Invalid Distance
     function testRevertsIfDistanceIsZero() public {
         vm.prank(official1);
-        
+
         vm.expectRevert(AthleticRegistry.AthleticRegistry__InvalidDistance.selector);
         registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 0);
     }

@@ -9,7 +9,7 @@ contract DeployAthleticRegistry is Script {
         vm.startBroadcast();
         AthleticRegistry registry = new AthleticRegistry();
         vm.stopBroadcast();
-        
+
         console.log("AthleticRegistry deployed to:", address(registry));
         return registry;
     }

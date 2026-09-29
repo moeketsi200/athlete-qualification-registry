@@ -125,7 +125,7 @@ contract AthleticRegistry is IAthleticRegistry {
         }
 
         PendingResult storage pending = s_pendingResults[athleteAddress][eventId];
-        
+
         if (pending.isCompleted) {
             revert AthleticRegistry__ResultFinalized();
         }
@@ -143,10 +143,10 @@ contract AthleticRegistry is IAthleticRegistry {
             }
             pending.approvalCount += 1;
             s_hasOfficialSubmitted[athleteAddress][eventId][msg.sender] = true;
-            
+
             if (pending.approvalCount >= REQUIRED_CONSENSUS) {
                 pending.isCompleted = true;
-                
+
                 MeetResult memory newResult = MeetResult({
                     eventId: eventId,
                     eventType: eventType,
@@ -154,9 +154,9 @@ contract AthleticRegistry is IAthleticRegistry {
                     timestamp: block.timestamp,
                     officialAddress: msg.sender
                 });
-        
+
                 s_athletesResults[athleteAddress].push(newResult);
-        
+
                 emit ResultRecorded(athleteAddress, eventId, eventType, distanceInMeters, msg.sender);
             }
         }
@@ -180,11 +180,19 @@ contract AthleticRegistry is IAthleticRegistry {
         return s_authorizedOfficials[officialAddress];
     }
 
-    function getPendingResult(address athleteAddress, string memory eventId) external view returns (PendingResult memory) {
+    function getPendingResult(address athleteAddress, string memory eventId)
+        external
+        view
+        returns (PendingResult memory)
+    {
         return s_pendingResults[athleteAddress][eventId];
     }
-    
-    function hasOfficialSubmitted(address athleteAddress, string memory eventId, address official) external view returns (bool) {
+
+    function hasOfficialSubmitted(address athleteAddress, string memory eventId, address official)
+        external
+        view
+        returns (bool)
+    {
         return s_hasOfficialSubmitted[athleteAddress][eventId][official];
     }
 }

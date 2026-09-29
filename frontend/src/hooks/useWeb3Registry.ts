@@ -112,6 +112,13 @@ export function useWeb3Registry() {
   const [authorizedOfficials, setAuthorizedOfficials] = useState<Set<string>>(OFFICIALS);
   const [officialsList, setOfficialsList] = useState<OfficialInfo[]>(INITIAL_OFFICIALS_LIST);
   
+  // Track pending results for Multi-Sig
+  const [pendingResults, setPendingResults] = useState<Record<string, {
+    distanceInMeters: number;
+    eventType: EventType;
+    officials: string[];
+  }>>({});
+  
   const [isProcessing, setIsProcessing] = useState(false);
   const [txMessage, setTxMessage] = useState<string | null>(null);
 
@@ -199,7 +206,7 @@ export function useWeb3Registry() {
     return newAthlete;
   }, [athletes, results]);
 
-  // Record Result Function (with strict custom error simulation)
+  // Record Result Function (with strict custom error simulation and Multi-Sig)
   const recordResult = useCallback(async (
     athleteAddress: string,
     eventId: string,
@@ -230,27 +237,67 @@ export function useWeb3Registry() {
       throw new Error("Reverted: Athlete is not registered on-chain!");
     }
 
-    const randomHash = '0x' + Array.from({length: 8}, () => Math.floor(Math.random()*16).toString(16)).join('') + '...' + Array.from({length: 4}, () => Math.floor(Math.random()*16).toString(16)).join('');
+    const pendingKey = `${formattedAddr}-${eventId}`;
+    const pending = pendingResults[pendingKey];
+    const currentWalletAddr = wallet.address || '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd';
 
-    const newResult: MeetResult = {
-      eventId,
-      eventType,
-      distanceInMeters,
-      timestamp: Math.floor(Date.now() / 1000),
-      officialAddress: wallet.address || '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd',
-      txHash: randomHash
-    };
+    if (pending && pending.officials.includes(currentWalletAddr)) {
+      setIsProcessing(false);
+      setTxMessage(null);
+      throw new Error("Reverted with custom error: AthleticRegistry__AlreadySubmitted()");
+    }
 
-    setResults(prev => ({
-      ...prev,
-      [formattedAddr]: [newResult, ...(prev[formattedAddr] || [])]
-    }));
+    if (!pending) {
+      // First signature
+      setPendingResults(prev => ({
+        ...prev,
+        [pendingKey]: {
+          distanceInMeters,
+          eventType,
+          officials: [currentWalletAddr]
+        }
+      }));
+      setIsProcessing(false);
+      setTxMessage(`Result Pending: Need 1 more official signature (1/2).`);
+      setTimeout(() => setTxMessage(null), 4000);
+      return;
+    } else {
+      // Second signature
+      if (pending.distanceInMeters !== distanceInMeters || pending.eventType !== eventType) {
+        setIsProcessing(false);
+        setTxMessage(null);
+        throw new Error("Reverted with custom error: AthleticRegistry__DistanceMismatch()");
+      }
 
-    setIsProcessing(false);
-    setTxMessage(`Result recorded! Distance: ${distanceInMeters}m`);
-    setTimeout(() => setTxMessage(null), 4000);
-    return newResult;
-  }, [wallet, athletes]);
+      const randomHash = '0x' + Array.from({length: 8}, () => Math.floor(Math.random()*16).toString(16)).join('') + '...' + Array.from({length: 4}, () => Math.floor(Math.random()*16).toString(16)).join('');
+
+      const newResult: MeetResult = {
+        eventId,
+        eventType,
+        distanceInMeters,
+        timestamp: Math.floor(Date.now() / 1000),
+        officialAddress: currentWalletAddr,
+        txHash: randomHash
+      };
+
+      setResults(prev => ({
+        ...prev,
+        [formattedAddr]: [newResult, ...(prev[formattedAddr] || [])]
+      }));
+      
+      // Clear pending
+      setPendingResults(prev => {
+        const next = { ...prev };
+        delete next[pendingKey];
+        return next;
+      });
+
+      setIsProcessing(false);
+      setTxMessage(`Consensus Reached! Result recorded permanently!`);
+      setTimeout(() => setTxMessage(null), 4000);
+      return newResult;
+    }
+  }, [wallet, athletes, pendingResults]);
 
   // Add Official Function
   const addOfficial = useCallback(async (officialAddr: string) => {

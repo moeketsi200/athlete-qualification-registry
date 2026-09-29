@@ -7,6 +7,11 @@ contract AthleticRegistry is IAthleticRegistry {
     // --- Custom Errors ---
     error AthleticRegistry__UnauthorizedOfficial();
     error AthleticRegistry__InvalidDistance();
+    error AthleticRegistry__AlreadySubmitted();
+    error AthleticRegistry__DistanceMismatch();
+    error AthleticRegistry__ResultFinalized();
+
+    uint256 public constant REQUIRED_CONSENSUS = 2;
 
     enum EventType {
         ShotPut,
@@ -36,6 +41,18 @@ contract AthleticRegistry is IAthleticRegistry {
     mapping(address => bool) private s_authorizedOfficials;
     address[] private s_officials;
     address private i_admin;
+
+    struct PendingResult {
+        EventType eventType;
+        uint256 distanceInMeters;
+        uint256 approvalCount;
+        bool isCompleted;
+    }
+
+    // athleteAddress => eventId => PendingResult
+    mapping(address => mapping(string => PendingResult)) private s_pendingResults;
+    // athleteAddress => eventId => official => bool
+    mapping(address => mapping(string => mapping(address => bool))) private s_hasOfficialSubmitted;
 
     // --- Events ---
     event AthleteRegistered(address indexed athleteAddress, string athleteId, string name);
@@ -103,17 +120,46 @@ contract AthleticRegistry is IAthleticRegistry {
             revert AthleticRegistry__InvalidDistance();
         }
 
-        MeetResult memory newResult = MeetResult({
-            eventId: eventId,
-            eventType: eventType,
-            distanceInMeters: distanceInMeters,
-            timestamp: block.timestamp,
-            officialAddress: msg.sender
-        });
+        if (s_hasOfficialSubmitted[athleteAddress][eventId][msg.sender]) {
+            revert AthleticRegistry__AlreadySubmitted();
+        }
 
-        s_athletesResults[athleteAddress].push(newResult);
+        PendingResult storage pending = s_pendingResults[athleteAddress][eventId];
+        
+        if (pending.isCompleted) {
+            revert AthleticRegistry__ResultFinalized();
+        }
 
-        emit ResultRecorded(athleteAddress, eventId, eventType, distanceInMeters, msg.sender);
+        if (pending.approvalCount == 0) {
+            // First submission
+            pending.eventType = eventType;
+            pending.distanceInMeters = distanceInMeters;
+            pending.approvalCount = 1;
+            s_hasOfficialSubmitted[athleteAddress][eventId][msg.sender] = true;
+        } else {
+            // Subsequent submission
+            if (pending.distanceInMeters != distanceInMeters || pending.eventType != eventType) {
+                revert AthleticRegistry__DistanceMismatch();
+            }
+            pending.approvalCount += 1;
+            s_hasOfficialSubmitted[athleteAddress][eventId][msg.sender] = true;
+            
+            if (pending.approvalCount >= REQUIRED_CONSENSUS) {
+                pending.isCompleted = true;
+                
+                MeetResult memory newResult = MeetResult({
+                    eventId: eventId,
+                    eventType: eventType,
+                    distanceInMeters: distanceInMeters,
+                    timestamp: block.timestamp,
+                    officialAddress: msg.sender
+                });
+        
+                s_athletesResults[athleteAddress].push(newResult);
+        
+                emit ResultRecorded(athleteAddress, eventId, eventType, distanceInMeters, msg.sender);
+            }
+        }
     }
 
     // --- Getter Functions ---
@@ -132,5 +178,13 @@ contract AthleticRegistry is IAthleticRegistry {
 
     function isOfficial(address officialAddress) external view returns (bool) {
         return s_authorizedOfficials[officialAddress];
+    }
+
+    function getPendingResult(address athleteAddress, string memory eventId) external view returns (PendingResult memory) {
+        return s_pendingResults[athleteAddress][eventId];
+    }
+    
+    function hasOfficialSubmitted(address athleteAddress, string memory eventId, address official) external view returns (bool) {
+        return s_hasOfficialSubmitted[athleteAddress][eventId][official];
     }
 }

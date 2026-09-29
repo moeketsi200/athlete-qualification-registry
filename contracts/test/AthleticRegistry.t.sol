@@ -10,6 +10,7 @@ contract AthleticRegistryTest is Test {
     // Create fake wallet addresses for testing
     address public admin = makeAddr("admin");
     address public official1 = makeAddr("official1");
+    address public official2 = makeAddr("official2");
     address public badActor = makeAddr("badActor");
     address public athlete = makeAddr("athlete");
 
@@ -18,21 +19,28 @@ contract AthleticRegistryTest is Test {
         vm.prank(admin);
         registry = new AthleticRegistry();
 
-        // Admin adds official1
-        vm.prank(admin);
+        // Admin adds official1 and official2
+        vm.startPrank(admin);
         registry.addOfficial(official1);
+        registry.addOfficial(official2);
 
         // Register test athlete
-        vm.prank(admin);
         registry.registerAthlete(athlete, "ATH-001", "Moeketsi", bytes32(0));
+        vm.stopPrank();
     }
 
-    // TEST 1: Happy Path - Official can record a result
+    // TEST 1: Happy Path - Official can record a result (requires 2 officials now)
     function testOfficialCanRecordResult() public {
         vm.prank(official1);
         registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 1855);
 
         AthleticRegistry.MeetResult[] memory results = registry.getAthleteResults(athlete);
+        assertEq(results.length, 0); // Not completed yet
+
+        vm.prank(official2);
+        registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 1855);
+
+        results = registry.getAthleteResults(athlete);
         assertEq(results.length, 1);
         assertEq(results[0].distanceInMeters, 1855);
     }
@@ -57,11 +65,13 @@ contract AthleticRegistryTest is Test {
     // TEST 4: Get List of Officials
     function testGetOfficials() public view {
         address[] memory officials = registry.getOfficials();
-        assertEq(officials.length, 2); // admin and official1
+        assertEq(officials.length, 3); // admin, official1, official2
         assertEq(officials[0], admin);
         assertEq(officials[1], official1);
+        assertEq(officials[2], official2);
         assertTrue(registry.isOfficial(admin));
         assertTrue(registry.isOfficial(official1));
+        assertTrue(registry.isOfficial(official2));
         assertFalse(registry.isOfficial(badActor));
     }
 
@@ -84,7 +94,7 @@ contract AthleticRegistryTest is Test {
         vm.prank(admin);
         registry.addOfficial(official1);
         address[] memory officials = registry.getOfficials();
-        assertEq(officials.length, 2); // should still be 2
+        assertEq(officials.length, 3); // should still be 3
     }
 
     // TEST 8: registerAthlete - Invalid Address

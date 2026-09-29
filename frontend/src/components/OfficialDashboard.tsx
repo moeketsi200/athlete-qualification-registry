@@ -9,6 +9,7 @@ interface OfficialDashboardProps {
   recordResult: (athleteAddr: string, eventId: string, type: EventType, dist: number) => Promise<MeetResult | void>;
   registerAthlete: (addr: string, id: string, name: string, hash: string) => Promise<Athlete | void>;
   addOfficial: (addr: string) => Promise<void>;
+  switchWallet: (addr: string) => void;
   isProcessing: boolean;
   txMessage: string | null;
   pendingResults?: Record<string, { distanceInMeters: number; eventType: EventType; officials: string[] }>;
@@ -22,6 +23,7 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
   recordResult,
   registerAthlete,
   addOfficial,
+  switchWallet,
   isProcessing,
   txMessage
 }) => {
@@ -349,6 +351,32 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
 
           {/* Record Result Form */}
           <form onSubmit={handleRecordSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.35rem' }}>
+            
+            {/* Simulate Signature Dropdown */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label className="form-label" style={{ color: '#c084fc' }}>
+                <Lock size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-1px' }} />
+                Simulate Signature As (Official Wallet)
+              </label>
+              <select
+                className="form-input"
+                value={wallet.address || ''}
+                onChange={e => switchWallet(e.target.value)}
+                style={{
+                  borderRadius: '14px',
+                  background: 'rgba(139, 92, 246, 0.08)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  color: '#e9d5ff',
+                  fontWeight: 700
+                }}
+              >
+                {officials.map(off => (
+                  <option key={off.address} value={off.address} style={{ color: '#000' }}>
+                    {off.title} ({off.address.substring(0, 6)}...{off.address.substring(off.address.length - 4)})
+                  </option>
+                ))}
+              </select>
+            </div>
             
             {/* Field 1: Select Athlete */}
             <div>

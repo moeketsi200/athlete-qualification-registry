@@ -12,8 +12,10 @@ export default function App() {
     wallet,
     connectWallet,
     toggleOfficialRole,
+    switchWallet,
     athletes,
     results,
+    pendingResults,
     officials,
     registerAthlete,
     recordResult,
@@ -130,8 +132,10 @@ export default function App() {
         ) : (
           <OfficialDashboard
             wallet={wallet}
+            switchWallet={switchWallet}
             athletes={athletes}
             officials={officials}
+            pendingResults={pendingResults}
             recordResult={recordResult}
             registerAthlete={registerAthlete}
             addOfficial={addOfficial}

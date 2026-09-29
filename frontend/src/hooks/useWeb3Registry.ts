@@ -190,6 +190,15 @@ export function useWeb3Registry() {
     });
   }, [authorizedOfficials]);
 
+  // Explicitly switch to a specific official wallet for testing
+  const switchWallet = useCallback((address: string) => {
+    setWallet(prev => ({
+      ...prev,
+      isOfficial: authorizedOfficials.has(address) || authorizedOfficials.has(address.toLowerCase()),
+      address: address
+    }));
+  }, [authorizedOfficials]);
+
   // Register Athlete Function
   const registerAthlete = useCallback(async (
     athleteAddress: string,
@@ -382,6 +391,7 @@ export function useWeb3Registry() {
     wallet,
     connectWallet,
     toggleOfficialRole,
+    switchWallet,
     athletes,
     results,
     pendingResults,

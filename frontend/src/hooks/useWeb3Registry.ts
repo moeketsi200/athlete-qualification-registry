@@ -153,13 +153,42 @@ export function useWeb3Registry() {
     }));
   }, [authorizedOfficials]);
 
-  // Toggle role between Official and Guest for live UI testing
+  // Cycle through available official wallets, and then guest mode, for live multi-sig UI testing
   const toggleOfficialRole = useCallback(() => {
-    setWallet(prev => ({
-      ...prev,
-      isOfficial: !prev.isOfficial
-    }));
-  }, []);
+    setWallet(prev => {
+      const officialAddresses = Array.from(authorizedOfficials);
+      
+      if (!prev.isOfficial || !prev.address) {
+         // Become Official 1
+         return {
+           ...prev,
+           isOfficial: true,
+           address: officialAddresses[0] || '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd'
+         };
+      }
+      
+      // We are currently an official. Find our index in the list.
+      const exactIndex = officialAddresses.indexOf(prev.address);
+      const lowerIndex = officialAddresses.indexOf(prev.address.toLowerCase());
+      const index = Math.max(exactIndex, lowerIndex);
+      
+      if (index >= 0 && index < officialAddresses.length - 1) {
+         // Switch to the next official wallet (for multi-sig consensus testing)
+         return {
+           ...prev,
+           isOfficial: true,
+           address: officialAddresses[index + 1]
+         };
+      } else {
+         // Exhausted all officials, switch to Guest Mode
+         return {
+           ...prev,
+           isOfficial: false,
+           address: null
+         };
+      }
+    });
+  }, [authorizedOfficials]);
 
   // Register Athlete Function
   const registerAthlete = useCallback(async (

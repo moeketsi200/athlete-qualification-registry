@@ -64,6 +64,7 @@ contract AthleticRegistryTest is Test {
         assertTrue(registry.isOfficial(official1));
         assertFalse(registry.isOfficial(badActor));
     }
+
     // TEST 5: addOfficial - Only admin can add
     function testRevertsIfNonAdminAddsOfficial() public {
         vm.prank(badActor);

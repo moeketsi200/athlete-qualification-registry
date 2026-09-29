@@ -190,41 +190,165 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
         </div>
       )}
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+      {/* Action Navigation Tabs Bar */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.85rem',
+        marginBottom: '1.75rem',
+        flexWrap: 'wrap',
+        background: 'rgba(10, 16, 30, 0.65)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid var(--border-glass-bright)',
+        padding: '0.65rem',
+        borderRadius: '20px',
+        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.35)'
+      }}>
+        
+        {/* Button 1: Record Meet Result */}
         <button
           onClick={() => setActiveTab('RECORD')}
-          className={activeTab === 'RECORD' ? 'btn-primary' : 'btn-secondary'}
+          style={{
+            flex: 1,
+            minWidth: '220px',
+            padding: '0.85rem 1.35rem',
+            borderRadius: '14px',
+            border: activeTab === 'RECORD' ? '1px solid rgba(245, 158, 11, 0.5)' : '1px solid transparent',
+            background: activeTab === 'RECORD' 
+              ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.15) 100%)' 
+              : 'transparent',
+            color: activeTab === 'RECORD' ? '#fbbf24' : 'var(--text-secondary)',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.65rem',
+            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            boxShadow: activeTab === 'RECORD' ? '0 4px 20px rgba(245, 158, 11, 0.3)' : 'none'
+          }}
         >
-          <PlusCircle size={18} /> Record Meet Result
+          <Flame size={20} color={activeTab === 'RECORD' ? '#fbbf24' : 'var(--text-muted)'} />
+          <span>Record Meet Result</span>
+          {activeTab === 'RECORD' && (
+            <span className="badge badge-gold" style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem' }}>Active</span>
+          )}
         </button>
+
+        {/* Button 2: Register New Athlete */}
         <button
           onClick={() => setActiveTab('REGISTER')}
-          className={activeTab === 'REGISTER' ? 'btn-primary' : 'btn-secondary'}
+          style={{
+            flex: 1,
+            minWidth: '220px',
+            padding: '0.85rem 1.35rem',
+            borderRadius: '14px',
+            border: activeTab === 'REGISTER' ? '1px solid rgba(6, 182, 212, 0.5)' : '1px solid transparent',
+            background: activeTab === 'REGISTER' 
+              ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.25) 0%, rgba(2, 132, 199, 0.15) 100%)' 
+              : 'transparent',
+            color: activeTab === 'REGISTER' ? '#38bdf8' : 'var(--text-secondary)',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.65rem',
+            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            boxShadow: activeTab === 'REGISTER' ? '0 4px 20px rgba(6, 182, 212, 0.3)' : 'none'
+          }}
         >
-          <UserPlus size={18} /> Register New Athlete
+          <UserPlus size={20} color={activeTab === 'REGISTER' ? '#38bdf8' : 'var(--text-muted)'} />
+          <span>Register New Athlete</span>
+          {activeTab === 'REGISTER' && (
+            <span className="badge badge-cyan" style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem' }}>Active</span>
+          )}
         </button>
+
+        {/* Button 3: Manage Officials */}
         <button
           onClick={() => setActiveTab('ADMIN')}
-          className={activeTab === 'ADMIN' ? 'btn-gold' : 'btn-secondary'}
+          style={{
+            flex: 1,
+            minWidth: '220px',
+            padding: '0.85rem 1.35rem',
+            borderRadius: '14px',
+            border: activeTab === 'ADMIN' ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid transparent',
+            background: activeTab === 'ADMIN' 
+              ? 'linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(109, 40, 217, 0.15) 100%)' 
+              : 'transparent',
+            color: activeTab === 'ADMIN' ? '#c084fc' : 'var(--text-secondary)',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.65rem',
+            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            boxShadow: activeTab === 'ADMIN' ? '0 4px 20px rgba(139, 92, 246, 0.3)' : 'none'
+          }}
         >
-          <ShieldCheck size={18} /> Manage Officials ({officials.length})
+          <ShieldCheck size={20} color={activeTab === 'ADMIN' ? '#c084fc' : 'var(--text-muted)'} />
+          <span>Manage Officials</span>
+          <span className="badge badge-purple" style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem' }}>
+            {officials.length}
+          </span>
         </button>
+
       </div>
 
       {/* Tab 1: Record Result */}
       {activeTab === 'RECORD' && (
-        <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Flame color="#f59e0b" size={20} />
-            Log Official Meet Performance (`recordResult`)
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-            Only verified officials can invoke this transaction. Invoking with distance = 0 will trigger <code style={{ color: '#f87171' }}>AthleticRegistry__InvalidDistance()</code> custom error.
-          </p>
+        <div className="glass-panel" style={{
+          padding: '2.25rem',
+          border: '1px solid rgba(245, 158, 11, 0.35)',
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(6, 182, 212, 0.04) 100%)',
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(245, 158, 11, 0.08)'
+        }}>
+          
+          {/* Form Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Flame color="#fbbf24" size={26} />
+                Log Official Meet Performance (`recordResult`)
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.3rem' }}>
+                Protected smart contract call cryptographically storing verified throwing distances on-chain.
+              </p>
+            </div>
 
-          <form onSubmit={handleRecordSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+            <span className="badge badge-gold" style={{ fontSize: '0.78rem', padding: '0.4rem 0.85rem' }}>
+              <ShieldCheck size={12} /> `onlyOfficial` Protected
+            </span>
+          </div>
+
+          {/* Revert Warning Callout */}
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.1)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            borderRadius: '12px',
+            padding: '0.75rem 1rem',
+            marginBottom: '1.5rem',
+            fontSize: '0.82rem',
+            color: '#f87171',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.6rem'
+          }}>
+            <AlertTriangle size={16} />
+            <span>
+              Invoking with distance = 0 will trigger <code style={{ color: '#fca5a5', fontFamily: 'var(--font-mono)' }}>AthleticRegistry__InvalidDistance()</code> custom error.
+            </span>
+          </div>
+
+          {/* Record Result Form */}
+          <form onSubmit={handleRecordSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.35rem' }}>
             
+            {/* Field 1: Select Athlete */}
             <div>
               <label className="form-label">Select Registered Athlete *</label>
               <select
@@ -232,8 +356,14 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
                 value={selectedAthleteAddr}
                 onChange={e => setSelectedAthleteAddr(e.target.value)}
                 required
+                style={{
+                  borderRadius: '14px',
+                  background: 'rgba(10, 16, 30, 0.85)',
+                  border: selectedAthleteAddr ? '1px solid var(--primary-cyan)' : '1px solid var(--border-glass-bright)',
+                  fontWeight: 600
+                }}
               >
-                <option value="">-- Choose Athlete --</option>
+                <option value="">-- Choose Registered Athlete --</option>
                 {Object.values(athletes).map(a => (
                   <option key={a.address} value={a.address}>
                     {a.name} ({a.athleteId})
@@ -242,34 +372,66 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
               </select>
             </div>
 
+            {/* Field 2: Event / Meet ID */}
             <div>
               <label className="form-label">Event / Meet ID *</label>
               <input
                 type="text"
                 className="form-input"
-                placeholder="e.g. MEET-2026-SHOTPUT-01"
+                placeholder="e.g. AFRICA-CHAMP-2026-SP"
                 value={eventId}
                 onChange={e => setEventId(e.target.value)}
                 required
+                style={{
+                  borderRadius: '14px',
+                  background: 'rgba(10, 16, 30, 0.85)',
+                  border: eventId ? '1px solid var(--primary-cyan)' : '1px solid var(--border-glass-bright)',
+                  fontFamily: 'var(--font-mono)'
+                }}
               />
             </div>
 
+            {/* Field 3: Event Type */}
             <div>
-              <label className="form-label">Event Type *</label>
+              <label className="form-label">Event Discipline *</label>
               <select
                 className="form-input"
                 value={eventType}
                 onChange={e => setEventType(Number(e.target.value) as EventType)}
+                style={{
+                  borderRadius: '14px',
+                  background: 'rgba(10, 16, 30, 0.85)',
+                  border: '1px solid var(--border-glass-bright)',
+                  fontWeight: 600
+                }}
               >
-                <option value={EventType.ShotPut}>Shot Put</option>
-                <option value={EventType.Discus}>Discus Throw</option>
-                <option value={EventType.Javelin}>Javelin Throw</option>
+                <option value={EventType.ShotPut}>Shot Put (7.26kg)</option>
+                <option value={EventType.Discus}>Discus Throw (2.0kg)</option>
+                <option value={EventType.Javelin}>Javelin Throw (800g)</option>
                 <option value={EventType.Other}>Other Event</option>
               </select>
             </div>
 
+            {/* Field 4: Performance Distance */}
             <div>
-              <label className="form-label">Performance Distance (Meters) *</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label className="form-label">Performance Distance (Meters) *</label>
+                <button
+                  type="button"
+                  onClick={() => setDistance('0')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#f87171',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    marginBottom: '0.4rem'
+                  }}
+                >
+                  Set 0m (Test Revert)
+                </button>
+              </div>
               <input
                 type="number"
                 step="0.01"
@@ -278,17 +440,53 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
                 value={distance}
                 onChange={e => setDistance(e.target.value)}
                 required
+                style={{
+                  borderRadius: '14px',
+                  background: 'rgba(10, 16, 30, 0.85)',
+                  border: distance ? (distance === '0' ? '1px solid #ef4444' : '1px solid var(--primary-gold)') : '1px solid var(--border-glass-bright)',
+                  boxShadow: distance === '0' ? '0 0 15px rgba(239, 68, 68, 0.3)' : 'none',
+                  fontSize: '1.05rem',
+                  fontWeight: 700
+                }}
               />
             </div>
 
-            <div style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
+            {/* Submission Action Button */}
+            <div style={{ gridColumn: '1 / -1', marginTop: '0.75rem' }}>
               <button
                 type="submit"
-                className="btn-primary"
                 disabled={isProcessing}
-                style={{ width: '100%', justifyContent: 'center', padding: '0.85rem' }}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.25) 100%)',
+                  color: '#fbbf24',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  padding: '0.95rem 1.6rem',
+                  fontSize: '1rem',
+                  fontWeight: 800,
+                  borderRadius: '14px',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: '0 4px 16px rgba(245, 158, 11, 0.25)'
+                }}
               >
-                {isProcessing ? "Executing Transaction..." : "Log Verified Distance On-Chain"}
+                <Flame size={20} color="#fbbf24" />
+                <span>{isProcessing ? "Invoking recordResult() On-Chain..." : "Log Verified Performance Distance"}</span>
+                <span style={{
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  border: '1px solid rgba(245, 158, 11, 0.3)',
+                  padding: '0.15rem 0.5rem',
+                  borderRadius: '6px',
+                  fontSize: '0.72rem',
+                  fontFamily: 'var(--font-mono)',
+                  color: '#fbbf24'
+                }}>
+                  recordResult()
+                </span>
               </button>
             </div>
 
@@ -298,17 +496,34 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
 
       {/* Tab 2: Register Athlete */}
       {activeTab === 'REGISTER' && (
-        <div className="glass-panel" style={{ padding: '2rem' }}>
-          <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <UserPlus color="#06b6d4" size={20} />
-            Register Athlete Profile (`registerAthlete`)
-          </h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-            Adds a new athlete entity to the immutable mapping <code style={{ color: '#38bdf8' }}>s_athletes[address]</code>.
-          </p>
+        <div className="glass-panel" style={{
+          padding: '2.25rem',
+          border: '1px solid rgba(6, 182, 212, 0.35)',
+          background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(139, 92, 246, 0.04) 100%)',
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(6, 182, 212, 0.08)'
+        }}>
+          
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <UserPlus color="#38bdf8" size={26} />
+                Register Athlete Profile (`registerAthlete`)
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.3rem' }}>
+                Adds a new verified athlete entity to the immutable smart contract mapping <code style={{ color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>s_athletes[address]</code>.
+              </p>
+            </div>
 
-          <form onSubmit={handleRegisterSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+            <span className="badge badge-cyan" style={{ fontSize: '0.78rem', padding: '0.4rem 0.85rem' }}>
+              <ShieldCheck size={12} /> On-Chain Profile Creation
+            </span>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleRegisterSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.35rem' }}>
             
+            {/* Field 1: Athlete Wallet Address */}
             <div>
               <label className="form-label">Athlete Wallet Address *</label>
               <input
@@ -318,9 +533,17 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
                 value={newAthleteAddr}
                 onChange={e => setNewAthleteAddr(e.target.value)}
                 required
+                style={{
+                  borderRadius: '14px',
+                  background: 'rgba(10, 16, 30, 0.85)',
+                  border: newAthleteAddr ? '1px solid var(--primary-cyan)' : '1px solid var(--border-glass-bright)',
+                  fontFamily: 'var(--font-mono)',
+                  boxShadow: newAthleteAddr ? '0 0 15px rgba(6, 182, 212, 0.2)' : 'none'
+                }}
               />
             </div>
 
+            {/* Field 2: Athlete Full Name */}
             <div>
               <label className="form-label">Athlete Full Name *</label>
               <input
@@ -330,39 +553,122 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
                 value={newAthleteName}
                 onChange={e => setNewAthleteName(e.target.value)}
                 required
+                style={{
+                  borderRadius: '14px',
+                  background: 'rgba(10, 16, 30, 0.85)',
+                  border: newAthleteName ? '1px solid var(--primary-cyan)' : '1px solid var(--border-glass-bright)',
+                  fontWeight: 600
+                }}
               />
             </div>
 
+            {/* Field 3: Athlete ID (with Auto-Generator) */}
             <div>
-              <label className="form-label">Athlete ID (Optional)</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label className="form-label">Athlete ID (Optional)</label>
+                <button
+                  type="button"
+                  onClick={() => setNewAthleteId(`ATH-ZA-${Math.floor(100 + Math.random() * 900)}`)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#38bdf8',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    marginBottom: '0.4rem'
+                  }}
+                >
+                  Generate ID
+                </button>
+              </div>
               <input
                 type="text"
                 className="form-input"
                 placeholder="e.g. ATH-ZA-999"
                 value={newAthleteId}
                 onChange={e => setNewAthleteId(e.target.value)}
+                style={{
+                  borderRadius: '14px',
+                  background: 'rgba(10, 16, 30, 0.85)',
+                  border: '1px solid var(--border-glass-bright)',
+                  fontFamily: 'var(--font-mono)'
+                }}
               />
             </div>
 
+            {/* Field 4: National ID Hash (with Auto-Generator) */}
             <div>
-              <label className="form-label">National ID Hash (bytes32 Optional)</label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <label className="form-label">National ID Hash (bytes32 Optional)</label>
+                <button
+                  type="button"
+                  onClick={() => setNewNationalIdHash('0x' + Array.from({length: 64}, () => Math.floor(Math.random()*16).toString(16)).join(''))}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#c084fc',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    marginBottom: '0.4rem'
+                  }}
+                >
+                  Generate Hash
+                </button>
+              </div>
               <input
                 type="text"
                 className="form-input"
                 placeholder="0x..."
                 value={newNationalIdHash}
                 onChange={e => setNewNationalIdHash(e.target.value)}
+                style={{
+                  borderRadius: '14px',
+                  background: 'rgba(10, 16, 30, 0.85)',
+                  border: '1px solid var(--border-glass-bright)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.85rem'
+                }}
               />
             </div>
 
-            <div style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
+            {/* Submit Action Button */}
+            <div style={{ gridColumn: '1 / -1', marginTop: '0.75rem' }}>
               <button
                 type="submit"
-                className="btn-primary"
                 disabled={isProcessing}
-                style={{ width: '100%', justifyContent: 'center', padding: '0.85rem' }}
+                style={{
+                  width: '100%',
+                  background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(2, 132, 199, 0.25) 100%)',
+                  color: '#38bdf8',
+                  border: '1px solid rgba(6, 182, 212, 0.4)',
+                  padding: '0.95rem 1.6rem',
+                  fontSize: '1rem',
+                  fontWeight: 800,
+                  borderRadius: '14px',
+                  cursor: isProcessing ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: '0 4px 16px rgba(6, 182, 212, 0.25)'
+                }}
               >
-                {isProcessing ? "Processing Registration..." : "Register Athlete Profile"}
+                <UserPlus size={20} color="#38bdf8" />
+                <span>{isProcessing ? "Submitting registerAthlete() On-Chain..." : "Register Athlete Profile On-Chain"}</span>
+                <span style={{
+                  background: 'rgba(6, 182, 212, 0.15)',
+                  border: '1px solid rgba(6, 182, 212, 0.3)',
+                  padding: '0.2rem 0.65rem',
+                  borderRadius: '8px',
+                  fontSize: '0.75rem',
+                  fontFamily: 'var(--font-mono)',
+                  color: '#38bdf8'
+                }}>
+                  registerAthlete()
+                </span>
               </button>
             </div>
 
@@ -375,34 +681,103 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* Add Official Form Card */}
-          <div className="glass-panel" style={{ padding: '2rem' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ShieldCheck color="#f59e0b" size={20} />
-              Authorize Meet Official (`addOfficial`)
-            </h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-              Admin function granting logging privileges to a meet official's wallet address.
-            </p>
-
-            <form onSubmit={handleAddOfficialSubmit} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '280px' }}>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Official Wallet Address (0x...)"
-                  value={newOfficialAddr}
-                  onChange={e => setNewOfficialAddr(e.target.value)}
-                  required
-                />
+          <div className="glass-panel" style={{
+            padding: '2.25rem',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%)',
+            boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(245, 158, 11, 0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <ShieldCheck color="#fbbf24" size={26} />
+                  Authorize Meet Official (`addOfficial`)
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.3rem' }}>
+                  Admin function granting logging privileges to a meet official's wallet address on-chain.
+                </p>
               </div>
-              <button
-                type="submit"
-                className="btn-gold"
-                disabled={isProcessing}
-                style={{ minWidth: '180px', justifyContent: 'center' }}
-              >
-                {isProcessing ? "Authorizing..." : "Grant Official Role"}
-              </button>
+
+              <span className="badge badge-gold" style={{ fontSize: '0.78rem', padding: '0.4rem 0.85rem' }}>
+                <Lock size={12} /> Admin Privileges Protected
+              </span>
+            </div>
+
+            <form onSubmit={handleAddOfficialSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                {/* Wallet Input Box with Icon */}
+                <div style={{ flex: 1, minWidth: '280px', position: 'relative' }}>
+                  <input
+                    type="text"
+                    className="form-input"
+                    style={{
+                      paddingLeft: '1.2rem',
+                      fontSize: '0.98rem',
+                      borderRadius: '14px',
+                      fontFamily: 'var(--font-mono)',
+                      background: 'rgba(10, 16, 30, 0.85)',
+                      border: newOfficialAddr ? '1px solid var(--primary-gold)' : '1px solid var(--border-glass-bright)',
+                      boxShadow: newOfficialAddr ? '0 0 20px rgba(245, 158, 11, 0.25)' : 'none'
+                    }}
+                    placeholder="Enter Official Wallet Address (e.g. 0x70997970C5...)"
+                    value={newOfficialAddr}
+                    onChange={e => setNewOfficialAddr(e.target.value)}
+                    required
+                  />
+                </div>
+
+                {/* Tasteful Gold Grant Role Button */}
+                <button
+                  type="submit"
+                  disabled={isProcessing}
+                  style={{
+                    minWidth: '220px',
+                    justifyContent: 'center',
+                    padding: '0.85rem 1.6rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 800,
+                    borderRadius: '14px',
+                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.25) 100%)',
+                    color: '#fbbf24',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    cursor: isProcessing ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.6rem',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: '0 4px 16px rgba(245, 158, 11, 0.25)'
+                  }}
+                >
+                  <ShieldCheck size={18} color="#fbbf24" />
+                  <span>{isProcessing ? "Authorizing On-Chain..." : "Grant Official Role"}</span>
+                  <span style={{
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    padding: '0.15rem 0.5rem',
+                    borderRadius: '6px',
+                    fontSize: '0.72rem',
+                    fontFamily: 'var(--font-mono)',
+                    color: '#fbbf24'
+                  }}>
+                    addOfficial()
+                  </span>
+                </button>
+              </div>
+
+              {/* Sample Quick Fill Address Helper */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                <span>Quick Test Address:</span>
+                <button
+                  type="button"
+                  onClick={() => setNewOfficialAddr('0x70997970C51812dc3A010C7d01b50e0d17dc79C8')}
+                  className="badge badge-cyan"
+                  style={{ cursor: 'pointer', fontFamily: 'var(--font-mono)', textTransform: 'none', fontSize: '0.75rem' }}
+                >
+                  0x70997...79C8 (Anvil #1)
+                </button>
+              </div>
+
             </form>
           </div>
 
@@ -424,14 +799,26 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
               </span>
             </div>
 
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{
+              overflowX: 'auto',
+              borderRadius: '14px',
+              border: '1px solid var(--border-glass-bright)',
+              background: 'rgba(10, 16, 30, 0.5)'
+            }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-glass)', color: 'var(--text-muted)' }}>
-                    <th style={{ padding: '0.85rem 1rem' }}>Wallet Address</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Contract Role & Title</th>
-                    <th style={{ padding: '0.85rem 1rem' }}>Modifier Status</th>
-                    <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
+                  <tr style={{
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    borderBottom: '1px solid var(--border-glass-bright)',
+                    color: 'var(--text-secondary)',
+                    textTransform: 'uppercase',
+                    fontSize: '0.75rem',
+                    letterSpacing: '0.06em'
+                  }}>
+                    <th style={{ padding: '1rem 1.25rem' }}>Wallet Address</th>
+                    <th style={{ padding: '1rem 1.25rem' }}>Contract Role & Title</th>
+                    <th style={{ padding: '1rem 1.25rem' }}>Modifier Status</th>
+                    <th style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -439,19 +826,35 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
                     <tr 
                       key={official.address + idx} 
                       style={{ 
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                        transition: 'background 0.2s ease'
+                        borderBottom: idx === officials.length - 1 ? 'none' : '1px solid rgba(255, 255, 255, 0.05)',
+                        transition: 'all 0.2s ease',
+                        background: idx % 2 === 0 ? 'rgba(255, 255, 255, 0.015)' : 'transparent'
                       }}
                     >
-                      <td style={{ padding: '1rem', fontFamily: 'monospace', fontWeight: 600 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <td style={{ padding: '1.1rem 1.25rem', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            background: official.isAdmin ? 'rgba(245, 158, 11, 0.2)' : 'rgba(6, 182, 212, 0.2)',
+                            border: official.isAdmin ? '1px solid var(--primary-gold)' : '1px solid var(--primary-cyan)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: official.isAdmin ? '#fbbf24' : '#38bdf8',
+                            fontSize: '0.75rem',
+                            fontWeight: 800
+                          }}>
+                            0x
+                          </div>
                           <span style={{ color: '#38bdf8' }}>
-                            {official.address.slice(0, 8)}...{official.address.slice(-6)}
+                            {official.address.slice(0, 10)}...{official.address.slice(-6)}
                           </span>
                         </div>
                       </td>
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <td style={{ padding: '1.1rem 1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
                           {official.isAdmin ? (
                             <span className="badge badge-gold" style={{ fontSize: '0.75rem' }}>
                               <Award size={12} /> Contract Admin
@@ -461,32 +864,27 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
                               <ShieldCheck size={12} /> Meet Official
                             </span>
                           )}
-                          <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                          <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', fontWeight: 500 }}>
                             {official.title || 'Authorized Meet Official'}
                           </span>
                         </div>
                       </td>
-                      <td style={{ padding: '1rem' }}>
+                      <td style={{ padding: '1.1rem 1.25rem' }}>
                         <span className="badge badge-green" style={{ fontSize: '0.75rem' }}>
                           <CheckCircle2 size={12} /> Authorized (`onlyOfficial`)
                         </span>
                       </td>
-                      <td style={{ padding: '1rem', textAlign: 'right' }}>
+                      <td style={{ padding: '1.1rem 1.25rem', textAlign: 'right' }}>
                         <button
                           onClick={() => handleCopy(official.address)}
-                          title="Copy Full Address"
+                          title="Copy Full Wallet Address"
+                          className="btn-secondary"
                           style={{
-                            background: 'rgba(255, 255, 255, 0.06)',
-                            border: '1px solid var(--border-glass)',
-                            color: copiedAddress === official.address ? '#34d399' : 'var(--text-primary)',
-                            padding: '0.4rem 0.75rem',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.4rem',
+                            color: copiedAddress === official.address ? '#34d399' : 'var(--text-main)',
+                            borderColor: copiedAddress === official.address ? 'rgba(16, 185, 129, 0.4)' : 'var(--border-glass)',
+                            padding: '0.45rem 0.85rem',
                             fontSize: '0.8rem',
-                            transition: 'all 0.2s ease'
+                            borderRadius: '10px'
                           }}
                         >
                           {copiedAddress === official.address ? (

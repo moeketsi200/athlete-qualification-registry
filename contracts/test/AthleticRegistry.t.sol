@@ -64,4 +64,55 @@ contract AthleticRegistryTest is Test {
         assertTrue(registry.isOfficial(official1));
         assertFalse(registry.isOfficial(badActor));
     }
+    // TEST 5: addOfficial - Only admin can add
+    function testRevertsIfNonAdminAddsOfficial() public {
+        vm.prank(badActor);
+        vm.expectRevert("Only admin can add officials");
+        registry.addOfficial(badActor);
+    }
+
+    // TEST 6: addOfficial - Invalid Address
+    function testRevertsIfAddOfficialZeroAddress() public {
+        vm.prank(admin);
+        vm.expectRevert("Invalid Official Address");
+        registry.addOfficial(address(0));
+    }
+
+    // TEST 7: addOfficial - Already added official does nothing duplicate
+    function testAddAlreadyAddedOfficial() public {
+        vm.prank(admin);
+        registry.addOfficial(official1);
+        address[] memory officials = registry.getOfficials();
+        assertEq(officials.length, 2); // should still be 2
+    }
+
+    // TEST 8: registerAthlete - Invalid Address
+    function testRevertsIfRegisterAthleteZeroAddress() public {
+        vm.prank(admin);
+        vm.expectRevert("Invalid Athlete Address");
+        registry.registerAthlete(address(0), "ATH-002", "Invalid", bytes32(0));
+    }
+
+    // TEST 9: registerAthlete - Already registered
+    function testRevertsIfAthleteAlreadyRegistered() public {
+        vm.prank(admin);
+        vm.expectRevert("Athlete already registered");
+        registry.registerAthlete(athlete, "ATH-001", "Moeketsi", bytes32(0));
+    }
+
+    // TEST 10: registerAthlete - Happy Path
+    function testGetAthlete() public {
+        AthleticRegistry.Athlete memory registeredAthlete = registry.getAthlete(athlete);
+        assertEq(registeredAthlete.athleteId, "ATH-001");
+        assertEq(registeredAthlete.name, "Moeketsi");
+        assertTrue(registeredAthlete.isRegistered);
+    }
+
+    // TEST 11: recordResult - Athlete not registered
+    function testRevertsIfRecordingForUnregisteredAthlete() public {
+        vm.prank(official1);
+        address unregisteredAthlete = makeAddr("unregistered");
+        vm.expectRevert("Athlete is not registered");
+        registry.recordResult(unregisteredAthlete, "MEET-2", AthleticRegistry.EventType.Discus, 1000);
+    }
 }

@@ -37,7 +37,7 @@ athlete-qualification-registry/
 │   │   └── DeployAthleticRegistry.s.sol   # Foundry deployment script
 │   │
 │   └── test/
-│       └── AthleticRegistry.t.sol         # Foundry test suite (3/3 passing)
+│       └── AthleticRegistry.t.sol         # Foundry test suite (11/11 passing, 100% coverage)
 │
 ├── frontend/
 │   ├── src/
@@ -90,13 +90,21 @@ forge build
 forge test -vvv
 ```
 
-**Test Results (3/3 Passed)**:
+**Test Results (11/11 Passed, 100% Coverage)**:
 ```text
-Ran 3 tests for contracts/test/AthleticRegistry.t.sol:AthleticRegistryTest
-[PASS] testOfficialCanRecordResult() (gas: 144090)
-[PASS] testRevertsIfDistanceIsZero() (gas: 19820)
-[PASS] testRevertsIfNonOfficialRecordsResult() (gas: 17598)
-Suite result: ok. 3 passed; 0 failed; 0 skipped
+Ran 11 tests for contracts/test/AthleticRegistry.t.sol:AthleticRegistryTest
+[PASS] testAddAlreadyAddedOfficial() (gas: 27418)
+[PASS] testGetAthlete() (gas: 26344)
+[PASS] testGetOfficials() (gas: 32747)
+[PASS] testOfficialCanRecordResult() (gas: 144181)
+[PASS] testRevertsIfAddOfficialZeroAddress() (gas: 14107)
+[PASS] testRevertsIfAthleteAlreadyRegistered() (gas: 18442)
+[PASS] testRevertsIfDistanceIsZero() (gas: 19843)
+[PASS] testRevertsIfNonAdminAddsOfficial() (gas: 14274)
+[PASS] testRevertsIfNonOfficialRecordsResult() (gas: 17555)
+[PASS] testRevertsIfRecordingForUnregisteredAthlete() (gas: 20123)
+[PASS] testRevertsIfRegisterAthleteZeroAddress() (gas: 14037)
+Suite result: ok. 11 passed; 0 failed; 0 skipped
 ```
 
 ### Run Deployment Script Simulation

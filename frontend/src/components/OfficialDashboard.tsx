@@ -11,12 +11,14 @@ interface OfficialDashboardProps {
   addOfficial: (addr: string) => Promise<void>;
   isProcessing: boolean;
   txMessage: string | null;
+  pendingResults?: Record<string, { distanceInMeters: number; eventType: EventType; officials: string[] }>;
 }
 
 export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
   wallet,
   athletes,
   officials = [],
+  pendingResults = {},
   recordResult,
   registerAthlete,
   addOfficial,
@@ -491,6 +493,87 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
             </div>
 
           </form>
+        </div>
+      )}
+
+      {/* Pending Multi-Sig Approvals (Visible on RECORD tab if pending results exist) */}
+      {activeTab === 'RECORD' && Object.keys(pendingResults).length > 0 && (
+        <div className="glass-panel" style={{
+          padding: '2rem',
+          marginTop: '1.5rem',
+          border: '1px solid rgba(139, 92, 246, 0.4)',
+          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(109, 40, 217, 0.05) 100%)',
+          boxShadow: '0 8px 32px rgba(139, 92, 246, 0.15)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            <AlertTriangle color="#c084fc" size={24} />
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#c084fc' }}>
+              Pending Multi-Sig Approvals (Action Required)
+            </h3>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {Object.entries(pendingResults).map(([key, pending]) => {
+              const [athleteAddr, eventId] = key.split('-');
+              const athlete = athletes[athleteAddr];
+              const athleteName = athlete ? athlete.name : "Unknown Athlete";
+              const isMySig = pending.officials.includes(wallet.address || '');
+
+              return (
+                <div key={key} style={{
+                  background: 'rgba(10, 16, 30, 0.7)',
+                  border: '1px solid rgba(139, 92, 246, 0.3)',
+                  borderRadius: '12px',
+                  padding: '1.25rem',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: '1rem'
+                }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '0.3rem' }}>
+                      {athleteName} <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 400 }}>({eventId})</span>
+                    </div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', display: 'flex', gap: '1.5rem' }}>
+                      <span><strong>Event:</strong> {EventTypeNames[pending.eventType]}</span>
+                      <span><strong>Pending Distance:</strong> <span style={{ color: '#c084fc', fontWeight: 700 }}>{pending.distanceInMeters}m</span></span>
+                    </div>
+                    <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      Signed by: <code style={{ color: '#a78bfa' }}>{pending.officials.join(', ')}</code>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ background: 'rgba(139, 92, 246, 0.2)', padding: '0.5rem 1rem', borderRadius: '8px', color: '#c084fc', fontWeight: 700, fontSize: '0.9rem' }}>
+                      {pending.officials.length}/{Math.ceil(officials.length * 0.9) || 1} Signatures
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedAthleteAddr(athleteAddr);
+                        setEventId(eventId);
+                        setEventType(pending.eventType);
+                        setDistance(pending.distanceInMeters.toString());
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      disabled={isMySig}
+                      style={{
+                        padding: '0.6rem 1.2rem',
+                        borderRadius: '8px',
+                        background: isMySig ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(109, 40, 217, 0.9))',
+                        border: 'none',
+                        color: isMySig ? 'var(--text-muted)' : 'white',
+                        fontWeight: 700,
+                        cursor: isMySig ? 'not-allowed' : 'pointer'
+                      }}
+                    >
+                      {isMySig ? 'Already Signed' : 'Sign & Complete'}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

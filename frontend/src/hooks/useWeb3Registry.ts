@@ -258,17 +258,37 @@ export function useWeb3Registry() {
         }
       }));
       setIsProcessing(false);
-      setTxMessage(`Result Pending: Need 1 more official signature (1/2).`);
+      const requiredConsensus = Math.ceil(officialsList.length * 0.9);
+      setTxMessage(`Result Pending: Need ${requiredConsensus - 1} more official signature(s) (${1}/${requiredConsensus}).`);
       setTimeout(() => setTxMessage(null), 4000);
       return;
     } else {
-      // Second signature
+      // Subsequent signatures
       if (pending.distanceInMeters !== distanceInMeters || pending.eventType !== eventType) {
         setIsProcessing(false);
         setTxMessage(null);
         throw new Error("Reverted with custom error: AthleticRegistry__DistanceMismatch()");
       }
 
+      const updatedOfficials = [...pending.officials, currentWalletAddr];
+      const requiredConsensus = Math.ceil(officialsList.length * 0.9) || 1;
+
+      if (updatedOfficials.length < requiredConsensus) {
+        // Still pending
+        setPendingResults(prev => ({
+          ...prev,
+          [pendingKey]: {
+            ...pending,
+            officials: updatedOfficials
+          }
+        }));
+        setIsProcessing(false);
+        setTxMessage(`Result Pending: Need ${requiredConsensus - updatedOfficials.length} more official signature(s) (${updatedOfficials.length}/${requiredConsensus}).`);
+        setTimeout(() => setTxMessage(null), 4000);
+        return;
+      }
+
+      // Consensus reached!
       const randomHash = '0x' + Array.from({length: 8}, () => Math.floor(Math.random()*16).toString(16)).join('') + '...' + Array.from({length: 4}, () => Math.floor(Math.random()*16).toString(16)).join('');
 
       const newResult: MeetResult = {
@@ -335,6 +355,7 @@ export function useWeb3Registry() {
     toggleOfficialRole,
     athletes,
     results,
+    pendingResults,
     officials: officialsList,
     registerAthlete,
     recordResult,

@@ -11,8 +11,6 @@ contract AthleticRegistry is IAthleticRegistry {
     error AthleticRegistry__DistanceMismatch();
     error AthleticRegistry__ResultFinalized();
 
-    uint256 public constant REQUIRED_CONSENSUS = 2;
-
     enum EventType {
         ShotPut,
         Discus,
@@ -144,7 +142,7 @@ contract AthleticRegistry is IAthleticRegistry {
             pending.approvalCount += 1;
             s_hasOfficialSubmitted[athleteAddress][eventId][msg.sender] = true;
 
-            if (pending.approvalCount >= REQUIRED_CONSENSUS) {
+            if (pending.approvalCount >= getRequiredConsensus()) {
                 pending.isCompleted = true;
 
                 MeetResult memory newResult = MeetResult({
@@ -194,5 +192,12 @@ contract AthleticRegistry is IAthleticRegistry {
         returns (bool)
     {
         return s_hasOfficialSubmitted[athleteAddress][eventId][official];
+    }
+
+    function getRequiredConsensus() public view returns (uint256) {
+        uint256 totalOfficials = s_officials.length;
+        if (totalOfficials == 0) return 0;
+        // Requires at least 90% of officials (rounded up via ceiling division)
+        return (totalOfficials * 90 + 99) / 100;
     }
 }

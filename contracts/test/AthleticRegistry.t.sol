@@ -29,7 +29,7 @@ contract AthleticRegistryTest is Test {
         vm.stopPrank();
     }
 
-    // TEST 1: Happy Path - Official can record a result (requires 2 officials now)
+    // TEST 1: Happy Path - Official can record a result (requires 3 officials now for 90% supermajority)
     function testOfficialCanRecordResult() public {
         vm.prank(official1);
         registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 1855);
@@ -38,6 +38,12 @@ contract AthleticRegistryTest is Test {
         assertEq(results.length, 0); // Not completed yet
 
         vm.prank(official2);
+        registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 1855);
+
+        results = registry.getAthleteResults(athlete);
+        assertEq(results.length, 0); // Still not completed (2/3 is 66%, need 90%)
+
+        vm.prank(admin);
         registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 1855);
 
         results = registry.getAthleteResults(athlete);

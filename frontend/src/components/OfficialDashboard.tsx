@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { ShieldCheck, PlusCircle, UserPlus, AlertTriangle, CheckCircle2, Lock, Flame, Copy, Check, Users, Award } from 'lucide-react';
-import { Athlete, MeetResult, EventType, EventTypeNames, WalletState, OfficialInfo } from '../types/registry';
+import { ShieldCheck, PlusCircle, UserPlus, AlertTriangle, CheckCircle2, Lock, Flame, Copy, Check, Users, Award, ClipboardCheck, CalendarCheck, XCircle, Clock } from 'lucide-react';
+import { Athlete, MeetResult, EventType, EventTypeNames, WalletState, OfficialInfo, EligibilityAttestation, EligibilityStatus } from '../types/registry';
 
 interface OfficialDashboardProps {
   wallet: WalletState;
   athletes: Record<string, Athlete>;
   officials?: OfficialInfo[];
+  eligibilities?: Record<string, EligibilityAttestation[]>;
   recordResult: (athleteAddr: string, eventId: string, type: EventType, dist: number) => Promise<MeetResult | void>;
-  registerAthlete: (addr: string, id: string, name: string, hash: string) => Promise<Athlete | void>;
+  registerAthlete: (addr: string, id: string, name: string, hash: string, clubId?: string) => Promise<Athlete | void>;
+  attestEligibility?: (addr: string, meetId: string, status: EligibilityStatus, expiresAt: number) => Promise<EligibilityAttestation | void>;
   addOfficial: (addr: string) => Promise<void>;
   switchWallet: (addr: string) => void;
   isProcessing: boolean;
@@ -20,14 +22,22 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
   athletes,
   officials = [],
   pendingResults = {},
+  eligibilities = {},
   recordResult,
   registerAthlete,
+  attestEligibility,
   addOfficial,
   switchWallet,
   isProcessing,
   txMessage
 }) => {
-  const [activeTab, setActiveTab] = useState<'RECORD' | 'REGISTER' | 'ADMIN'>('RECORD');
+  const [activeTab, setActiveTab] = useState<'RECORD' | 'REGISTER' | 'ADMIN' | 'CLEARANCE'>('RECORD');
+
+  // Pre-Meet Clearance form state
+  const [clearanceAthleteAddr, setClearanceAthleteAddr] = useState('');
+  const [clearanceMeetId, setClearanceMeetId] = useState('');
+  const [clearanceStatus, setClearanceStatus] = useState<EligibilityStatus>(EligibilityStatus.Cleared);
+  const [clearanceDays, setClearanceDays] = useState('90');
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
 
   // Record Result Form State
@@ -97,6 +107,38 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
       setFormError((err as Error).message || "Failed to register athlete.");
     }
   };
+
+  const handleClearanceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    if (!clearanceAthleteAddr) {
+      setFormError('Please select an athlete to attest.');
+      return;
+    }
+    if (!clearanceMeetId.trim()) {
+      setFormError('Please enter a Meet ID to attest eligibility for.');
+      return;
+    }
+
+    try {
+      const days = parseInt(clearanceDays) || 90;
+      const expiresAt = Math.floor(Date.now() / 1000) + days * 86400;
+      if (attestEligibility) {
+        await attestEligibility(clearanceAthleteAddr, clearanceMeetId, clearanceStatus, expiresAt);
+      }
+      setClearanceAthleteAddr('');
+      setClearanceMeetId('');
+    } catch (err: unknown) {
+      setFormError((err as Error).message || 'Failed to attest eligibility.');
+    }
+  };
+
+  const totalClearances = Object.values(eligibilities).reduce((acc, list) => acc + list.length, 0);
+  const activeClearances = Object.values(eligibilities).reduce((acc, list) => {
+    const now = Math.floor(Date.now() / 1000);
+    return acc + list.filter(a => a.status === EligibilityStatus.Cleared && a.expiresAt > now).length;
+  }, 0);
 
   const handleAddOfficialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -276,7 +318,7 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
           onClick={() => setActiveTab('ADMIN')}
           style={{
             flex: 1,
-            minWidth: '220px',
+            minWidth: '180px',
             padding: '0.85rem 1.35rem',
             borderRadius: '14px',
             border: activeTab === 'ADMIN' ? '1px solid rgba(139, 92, 246, 0.5)' : '1px solid transparent',
@@ -299,6 +341,37 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
           <span>Manage Officials</span>
           <span className="badge badge-purple" style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem' }}>
             {officials.length}
+          </span>
+        </button>
+
+        {/* Button 4: Pre-Meet Clearance */}
+        <button
+          onClick={() => setActiveTab('CLEARANCE')}
+          style={{
+            flex: 1,
+            minWidth: '180px',
+            padding: '0.85rem 1.35rem',
+            borderRadius: '14px',
+            border: activeTab === 'CLEARANCE' ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid transparent',
+            background: activeTab === 'CLEARANCE'
+              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.15) 100%)'
+              : 'transparent',
+            color: activeTab === 'CLEARANCE' ? '#34d399' : 'var(--text-secondary)',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '0.65rem',
+            transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            boxShadow: activeTab === 'CLEARANCE' ? '0 4px 20px rgba(16, 185, 129, 0.3)' : 'none'
+          }}
+        >
+          <ClipboardCheck size={20} color={activeTab === 'CLEARANCE' ? '#34d399' : 'var(--text-muted)'} />
+          <span>Pre-Meet Clearance</span>
+          <span className="badge badge-green" style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem' }}>
+            {activeClearances}
           </span>
         </button>
 
@@ -1015,6 +1088,307 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
               </table>
             </div>
 
+          </div>
+
+        </div>
+      )}
+
+      {/* Tab 4: Pre-Meet Clearance */}
+      {activeTab === 'CLEARANCE' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+
+          {/* Attestation Form */}
+          <div className="glass-panel" style={{
+            padding: '2.25rem',
+            border: '1px solid rgba(16, 185, 129, 0.35)',
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(6, 182, 212, 0.04) 100%)',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.4), 0 0 25px rgba(16,185,129,0.08)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.35rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                  <ClipboardCheck color="#34d399" size={26} />
+                  Attest Pre-Meet Eligibility (`attestEligibility`)
+                </h3>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginTop: '0.3rem' }}>
+                  Cryptographically lock an athlete's clearance status <strong>before</strong> competition — timestamped and immutable.
+                  This addresses the most common failure: athletes competing without prior clearance.
+                </p>
+              </div>
+              <span className="badge badge-green" style={{ fontSize: '0.78rem', padding: '0.4rem 0.85rem' }}>
+                <ShieldCheck size={12} /> `onlyOfficial` Protected
+              </span>
+            </div>
+
+            {/* Why this matters callout */}
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.08)',
+              border: '1px solid rgba(16, 185, 129, 0.2)',
+              borderRadius: '12px',
+              padding: '0.85rem 1.1rem',
+              marginBottom: '1.5rem',
+              fontSize: '0.83rem',
+              color: '#6ee7b7',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.6rem'
+            }}>
+              <CalendarCheck size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+              <span>
+                <strong>Why this matters:</strong> The most common qualification failure is not that distances are altered —
+                it is that athletes are <em>not cleared before the competition</em>.
+                This attestation creates a cryptographic, time-stamped pre-clearance record that
+                cannot be disputed, lost, or backdated.
+              </span>
+            </div>
+
+            <form onSubmit={handleClearanceSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.35rem' }}>
+
+              {/* Select Athlete */}
+              <div>
+                <label className="form-label">Athlete to Clear *</label>
+                <select
+                  className="form-input"
+                  value={clearanceAthleteAddr}
+                  onChange={e => setClearanceAthleteAddr(e.target.value)}
+                  required
+                  style={{
+                    borderRadius: '14px',
+                    background: 'rgba(10, 16, 30, 0.85)',
+                    border: clearanceAthleteAddr ? '1px solid #34d399' : '1px solid var(--border-glass-bright)',
+                    fontWeight: 600
+                  }}
+                >
+                  <option value="">-- Select Registered Athlete --</option>
+                  {Object.values(athletes).map(a => (
+                    <option key={a.address} value={a.address}>
+                      {a.name} ({a.athleteId})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Meet ID */}
+              <div>
+                <label className="form-label">Target Meet ID *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. NATIONALS-2027"
+                  value={clearanceMeetId}
+                  onChange={e => setClearanceMeetId(e.target.value)}
+                  required
+                  style={{
+                    borderRadius: '14px',
+                    background: 'rgba(10, 16, 30, 0.85)',
+                    border: clearanceMeetId ? '1px solid #34d399' : '1px solid var(--border-glass-bright)',
+                    fontFamily: 'var(--font-mono)'
+                  }}
+                />
+                {/* Quick-fill buttons */}
+                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  {['NATIONALS-2027', 'AFRICA-CHAMPS-2027', 'WORLD-ATHLETICS-2027'].map(m => (
+                    <button key={m} type="button" onClick={() => setClearanceMeetId(m)}
+                      className="badge badge-green"
+                      style={{ cursor: 'pointer', fontFamily: 'var(--font-mono)', textTransform: 'none', fontSize: '0.7rem' }}
+                    >{m}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Eligibility Status */}
+              <div>
+                <label className="form-label">Eligibility Decision *</label>
+                <select
+                  className="form-input"
+                  value={clearanceStatus}
+                  onChange={e => setClearanceStatus(Number(e.target.value) as EligibilityStatus)}
+                  style={{
+                    borderRadius: '14px',
+                    background: 'rgba(10, 16, 30, 0.85)',
+                    border: clearanceStatus === EligibilityStatus.Cleared
+                      ? '1px solid #34d399'
+                      : clearanceStatus === EligibilityStatus.Denied
+                        ? '1px solid #f87171'
+                        : '1px solid var(--border-glass-bright)',
+                    fontWeight: 700,
+                    color: clearanceStatus === EligibilityStatus.Cleared ? '#34d399'
+                         : clearanceStatus === EligibilityStatus.Denied ? '#f87171' : '#fbbf24'
+                  }}
+                >
+                  <option value={EligibilityStatus.Cleared}>✅  Cleared — Athlete is eligible to compete</option>
+                  <option value={EligibilityStatus.Pending}>⏳  Pending — Under review, not yet cleared</option>
+                  <option value={EligibilityStatus.Denied}>❌  Denied — Athlete does not meet requirements</option>
+                </select>
+              </div>
+
+              {/* Validity (days) */}
+              <div>
+                <label className="form-label">Clearance Valid For (Days)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  className="form-input"
+                  value={clearanceDays}
+                  onChange={e => setClearanceDays(e.target.value)}
+                  style={{
+                    borderRadius: '14px',
+                    background: 'rgba(10, 16, 30, 0.85)',
+                    border: '1px solid var(--border-glass-bright)',
+                    fontWeight: 600
+                  }}
+                />
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
+                  Expires: {new Date(Date.now() + (parseInt(clearanceDays) || 90) * 86400000).toLocaleDateString('en-ZA', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div style={{ gridColumn: '1 / -1', marginTop: '0.75rem' }}>
+                <button
+                  type="submit"
+                  disabled={isProcessing}
+                  style={{
+                    width: '100%',
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.25) 100%)',
+                    color: '#34d399',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    padding: '0.95rem 1.6rem',
+                    fontSize: '1rem',
+                    fontWeight: 800,
+                    borderRadius: '14px',
+                    cursor: isProcessing ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.75rem',
+                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                    boxShadow: '0 4px 16px rgba(16, 185, 129, 0.25)'
+                  }}
+                >
+                  <ClipboardCheck size={20} color="#34d399" />
+                  <span>{isProcessing ? 'Attesting Eligibility On-Chain...' : 'Attest Eligibility & Lock On-Chain'}</span>
+                  <span style={{
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    padding: '0.2rem 0.65rem',
+                    borderRadius: '8px',
+                    fontSize: '0.75rem',
+                    fontFamily: 'var(--font-mono)',
+                    color: '#34d399'
+                  }}>
+                    attestEligibility()
+                  </span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+          {/* Existing Attestations Table */}
+          <div className="glass-panel" style={{ padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <CalendarCheck color="#34d399" size={22} />
+                  On-Chain Eligibility Attestations
+                </h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.25rem' }}>
+                  Immutable, timestamped pre-meet clearances — the cryptographic proof that eliminates "not cleared in time" disputes.
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span className="badge badge-green" style={{ fontSize: '0.85rem', padding: '0.4rem 0.85rem' }}>
+                  <CheckCircle2 size={14} /> {activeClearances} Active Clearances
+                </span>
+                <span className="badge" style={{ fontSize: '0.85rem', padding: '0.4rem 0.85rem', background: 'rgba(255,255,255,0.07)', color: 'var(--text-secondary)' }}>
+                  {totalClearances} Total
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {Object.entries(eligibilities).length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                  No eligibility attestations recorded yet. Use the form above to attest an athlete's pre-meet clearance.
+                </div>
+              ) : (
+                Object.entries(eligibilities).map(([addr, attestations]) => {
+                  const athlete = athletes[addr];
+                  if (!attestations || attestations.length === 0) return null;
+                  return (
+                    <div key={addr}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginBottom: '0.5rem', paddingLeft: '0.25rem' }}>
+                        {athlete ? `${athlete.name} (${athlete.athleteId})` : `${addr.slice(0, 10)}...${addr.slice(-6)}`}
+                      </div>
+                      {attestations.map((att, idx) => {
+                        const now = Math.floor(Date.now() / 1000);
+                        const isExpired = att.expiresAt < now;
+                        const daysLeft = Math.max(0, Math.ceil((att.expiresAt - now) / 86400));
+
+                        const statusColor = att.status === EligibilityStatus.Cleared
+                          ? '#34d399' : att.status === EligibilityStatus.Denied
+                          ? '#f87171' : '#fbbf24';
+                        const statusIcon = att.status === EligibilityStatus.Cleared
+                          ? <CheckCircle2 size={15} /> : att.status === EligibilityStatus.Denied
+                          ? <XCircle size={15} /> : <Clock size={15} />;
+                        const statusLabel = att.status === EligibilityStatus.Cleared ? 'Cleared'
+                          : att.status === EligibilityStatus.Denied ? 'Denied' : 'Pending';
+
+                        return (
+                          <div key={idx} style={{
+                            background: 'rgba(10, 16, 30, 0.6)',
+                            border: `1px solid ${isExpired ? 'rgba(100,100,100,0.3)' : att.status === EligibilityStatus.Cleared ? 'rgba(16, 185, 129, 0.25)' : att.status === EligibilityStatus.Denied ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.25)'}`,
+                            borderRadius: '12px',
+                            padding: '1rem 1.25rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '0.85rem',
+                            opacity: isExpired ? 0.6 : 1
+                          }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.3rem' }}>
+                                <span style={{ color: statusColor, display: 'flex', alignItems: 'center', gap: '0.35rem', fontWeight: 700, fontSize: '0.92rem' }}>
+                                  {statusIcon} {statusLabel}
+                                </span>
+                                <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>for</span>
+                                <span style={{ color: '#38bdf8', fontWeight: 700, fontFamily: 'var(--font-mono)', fontSize: '0.88rem' }}>{att.meetId}</span>
+                                {isExpired && <span className="badge" style={{ fontSize: '0.68rem', background: 'rgba(100,100,100,0.2)', color: 'var(--text-muted)' }}>Expired</span>}
+                              </div>
+                              <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                                Attested {new Date(att.attestedAt * 1000).toLocaleDateString('en-ZA', { year:'numeric', month:'short', day:'numeric' })}
+                                {' · '}
+                                {isExpired ? 'Expired' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining`}
+                                {' · by '}
+                                <code style={{ color: '#a78bfa', fontSize: '0.75rem' }}>{att.attestedBy.slice(0,10)}...{att.attestedBy.slice(-4)}</code>
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              {!isExpired && (
+                                <div style={{
+                                  background: `rgba(${att.status === EligibilityStatus.Cleared ? '16,185,129' : att.status === EligibilityStatus.Denied ? '239,68,68' : '245,158,11'}, 0.12)`,
+                                  border: `1px solid ${statusColor}33`,
+                                  borderRadius: '8px',
+                                  padding: '0.35rem 0.75rem',
+                                  fontSize: '0.78rem',
+                                  color: statusColor,
+                                  fontWeight: 600
+                                }}>
+                                  Expires {new Date(att.expiresAt * 1000).toLocaleDateString('en-ZA', { month:'short', day:'numeric', year:'numeric' })}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
 
         </div>

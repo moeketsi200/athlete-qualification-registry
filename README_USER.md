@@ -1,9 +1,9 @@
 Decentralized Athletic Qualification Registry
 Overview
 
-Regional track and field qualification records—particularly for throwing events such as shot put, discus, and javelin—frequently suffer from administrative disputes, missing paperwork, or post-event registration disqualifications.
+Regional track and field qualification records—particularly for throwing events such as shot put, discus, and javelin—suffer from administrative disputes, missing paperwork, and delayed verification.
 
-Building an immutable, transparent ledger for official meet results eliminates these grievances. The Decentralized Athletic Qualification Registry ensures that once a performance distance is logged by an authorized official, the athlete's qualification status is cryptographically verifiable on-chain and cannot be retroactively or arbitrarily altered by regional management.
+The **Decentralized Athletic Qualification Registry** addresses this by creating a tamper-evident, time-stamped record of athlete eligibility and official performances. Once an athlete is pre-cleared by authorized officials and a result is attested via multi-signature consensus at the event, the qualification record becomes cryptographically verifiable and far less vulnerable to administrative delay, dispute, or paperwork loss.
 Learning Outcomes & Tech Stack
 
     Smart Contract Engineering: Writing clean, gas-efficient Solidity contracts with robust data structures.

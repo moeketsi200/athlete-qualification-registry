@@ -10,6 +10,8 @@ contract AthleticRegistry is IAthleticRegistry {
     error AthleticRegistry__AlreadySubmitted();
     error AthleticRegistry__DistanceMismatch();
     error AthleticRegistry__ResultFinalized();
+    error AthleticRegistry__EligibilityExpired();
+    error AthleticRegistry__AthleteNotRegistered();
 
     enum EventType {
         ShotPut,
@@ -18,9 +20,32 @@ contract AthleticRegistry is IAthleticRegistry {
         Other
     }
 
+    // --- Eligibility ---
+    enum EligibilityStatus {
+        Pending,
+        Cleared,
+        Denied
+    }
+
+    struct EligibilityAttestation {
+        string meetId;
+        EligibilityStatus status;
+        uint256 attestedAt;
+        uint256 expiresAt;
+        address attestedBy;
+    }
+
+    struct QualificationStandard {
+        EventType eventType;
+        string targetMeetId;
+        uint256 distanceThresholdScaled; // stored as distance * 100 (e.g. 2145 = 21.45m)
+        bool isActive;
+    }
+
     struct Athlete {
         string athleteId;
         string name;
+        string clubId;
         bytes32 nationalIdHash;
         bool isRegistered;
     }
@@ -28,9 +53,16 @@ contract AthleticRegistry is IAthleticRegistry {
     struct MeetResult {
         string eventId;
         EventType eventType;
-        uint256 distanceInMeters;
+        uint256 distanceInMeters; // stored scaled * 100 (e.g. 2145 = 21.45m)
         uint256 timestamp;
         address officialAddress;
+    }
+
+    struct PendingResult {
+        EventType eventType;
+        uint256 distanceInMeters;
+        uint256 approvalCount;
+        bool isCompleted;
     }
 
     // --- State Variables ---
@@ -40,17 +72,17 @@ contract AthleticRegistry is IAthleticRegistry {
     address[] private s_officials;
     address private i_admin;
 
-    struct PendingResult {
-        EventType eventType;
-        uint256 distanceInMeters;
-        uint256 approvalCount;
-        bool isCompleted;
-    }
-
     // athleteAddress => eventId => PendingResult
     mapping(address => mapping(string => PendingResult)) private s_pendingResults;
     // athleteAddress => eventId => official => bool
     mapping(address => mapping(string => mapping(address => bool))) private s_hasOfficialSubmitted;
+
+    // athleteAddress => meetId => EligibilityAttestation
+    mapping(address => mapping(string => EligibilityAttestation)) private s_eligibility;
+
+    // standardId => QualificationStandard  (standardId = keccak256(eventType, targetMeetId))
+    mapping(bytes32 => QualificationStandard) private s_qualificationStandards;
+    bytes32[] private s_standardIds;
 
     // --- Events ---
     event AthleteRegistered(address indexed athleteAddress, string athleteId, string name);
@@ -61,12 +93,28 @@ contract AthleticRegistry is IAthleticRegistry {
         uint256 distanceInMeters,
         address indexed officialAddress
     );
+    event EligibilityAttested(
+        address indexed athleteAddress,
+        string meetId,
+        EligibilityStatus status,
+        uint256 expiresAt,
+        address indexed attestedBy
+    );
+    event QualificationAchieved(
+        address indexed athleteAddress, string targetMeetId, EventType indexed eventType, uint256 distanceInMeters
+    );
+    event StandardSet(string targetMeetId, EventType eventType, uint256 thresholdScaled);
 
     // --- Modifiers ---
     modifier onlyOfficial() {
         if (!s_authorizedOfficials[msg.sender]) {
             revert AthleticRegistry__UnauthorizedOfficial();
         }
+        _;
+    }
+
+    modifier onlyAdmin() {
+        require(msg.sender == i_admin, "Only admin");
         _;
     }
 
@@ -77,8 +125,9 @@ contract AthleticRegistry is IAthleticRegistry {
         emit OfficialAdded(msg.sender);
     }
 
-    function addOfficial(address _official) external {
-        require(msg.sender == i_admin, "Only admin can add officials");
+    // --- Officials Management ---
+
+    function addOfficial(address _official) external onlyAdmin {
         require(_official != address(0), "Invalid Official Address");
         if (!s_authorizedOfficials[_official]) {
             s_authorizedOfficials[_official] = true;
@@ -87,26 +136,68 @@ contract AthleticRegistry is IAthleticRegistry {
         }
     }
 
+    function removeOfficial(address _official) external onlyAdmin {
+        require(_official != i_admin, "Cannot remove admin");
+        if (s_authorizedOfficials[_official]) {
+            s_authorizedOfficials[_official] = false;
+            emit OfficialRemoved(_official);
+        }
+    }
+
+    // --- Athlete Registration ---
+
     /**
-     * @notice Registers a new athlete profile on-chain.
+     * @notice Registers a new athlete profile on-chain with optional club affiliation.
      */
     function registerAthlete(
         address athleteAddress,
         string memory athleteId,
         string memory name,
+        string memory clubId,
         bytes32 nationalIdHash
     ) external {
         require(athleteAddress != address(0), "Invalid Athlete Address");
         require(!s_athletes[athleteAddress].isRegistered, "Athlete already registered");
 
-        s_athletes[athleteAddress] =
-            Athlete({athleteId: athleteId, name: name, nationalIdHash: nationalIdHash, isRegistered: true});
+        s_athletes[athleteAddress] = Athlete({
+            athleteId: athleteId, name: name, clubId: clubId, nationalIdHash: nationalIdHash, isRegistered: true
+        });
 
         emit AthleteRegistered(athleteAddress, athleteId, name);
     }
 
+    // --- Pre-Meet Eligibility Attestation ---
+
+    /**
+     * @notice Attests an athlete's eligibility (or denial) for a specific upcoming meet.
+     * @dev Once attested as Cleared, the athlete has an immutable, timestamped on-chain proof
+     *      that they were pre-cleared before competition — addressing the "not cleared in time"
+     *      failure mode without making any claim about retroactive distance manipulation.
+     */
+    function attestEligibility(
+        address athleteAddress,
+        string memory meetId,
+        EligibilityStatus status,
+        uint256 expiresAt
+    ) external onlyOfficial {
+        if (!s_athletes[athleteAddress].isRegistered) {
+            revert AthleticRegistry__AthleteNotRegistered();
+        }
+        require(expiresAt > block.timestamp, "Expiry must be in future");
+
+        s_eligibility[athleteAddress][meetId] = EligibilityAttestation({
+            meetId: meetId, status: status, attestedAt: block.timestamp, expiresAt: expiresAt, attestedBy: msg.sender
+        });
+
+        emit EligibilityAttested(athleteAddress, meetId, status, expiresAt, msg.sender);
+    }
+
+    // --- Result Recording (Multi-Sig) ---
+
     /**
      * @notice Records an official meet performance for a registered athlete.
+     * @dev Requires 90% consensus from all authorized officials before finalizing.
+     *      distanceInMeters is passed in scaled form (e.g. 2145 = 21.45m) for integer precision.
      */
     function recordResult(address athleteAddress, string memory eventId, EventType eventType, uint256 distanceInMeters)
         external
@@ -129,13 +220,11 @@ contract AthleticRegistry is IAthleticRegistry {
         }
 
         if (pending.approvalCount == 0) {
-            // First submission
             pending.eventType = eventType;
             pending.distanceInMeters = distanceInMeters;
             pending.approvalCount = 1;
             s_hasOfficialSubmitted[athleteAddress][eventId][msg.sender] = true;
         } else {
-            // Subsequent submission
             if (pending.distanceInMeters != distanceInMeters || pending.eventType != eventType) {
                 revert AthleticRegistry__DistanceMismatch();
             }
@@ -156,8 +245,87 @@ contract AthleticRegistry is IAthleticRegistry {
                 s_athletesResults[athleteAddress].push(newResult);
 
                 emit ResultRecorded(athleteAddress, eventId, eventType, distanceInMeters, msg.sender);
+
+                // Auto-check all active qualification standards for this event type
+                _checkQualificationStandards(athleteAddress, eventType, distanceInMeters);
             }
         }
+    }
+
+    // --- Qualification Standards ---
+
+    /**
+     * @notice Sets a qualification threshold for a target meet and event type.
+     * @param eventType   The throwing discipline
+     * @param targetMeetId e.g. "NATIONALS-2027"
+     * @param distanceThresholdScaled  Distance × 100 in cm (e.g. 2145 = 21.45m)
+     */
+    function setQualificationStandard(EventType eventType, string memory targetMeetId, uint256 distanceThresholdScaled)
+        external
+        onlyAdmin
+    {
+        bytes32 sid = _standardId(eventType, targetMeetId);
+        bool isNew = !s_qualificationStandards[sid].isActive;
+
+        s_qualificationStandards[sid] = QualificationStandard({
+            eventType: eventType,
+            targetMeetId: targetMeetId,
+            distanceThresholdScaled: distanceThresholdScaled,
+            isActive: true
+        });
+
+        if (isNew) {
+            s_standardIds.push(sid);
+        }
+
+        emit StandardSet(targetMeetId, eventType, distanceThresholdScaled);
+    }
+
+    /**
+     * @notice Checks whether an athlete has achieved a qualification standard for a target meet.
+     * @return qualified true if the athlete's best result for the event type meets or exceeds the threshold.
+     * @return bestDistance The athlete's best distance for that event type (0 if none).
+     * @return threshold    The required distance threshold.
+     */
+    function checkQualified(address athleteAddress, EventType eventType, string memory targetMeetId)
+        external
+        view
+        returns (bool qualified, uint256 bestDistance, uint256 threshold)
+    {
+        bytes32 sid = _standardId(eventType, targetMeetId);
+        QualificationStandard memory standard = s_qualificationStandards[sid];
+
+        if (!standard.isActive) {
+            return (false, 0, 0);
+        }
+
+        threshold = standard.distanceThresholdScaled;
+        MeetResult[] memory results = s_athletesResults[athleteAddress];
+
+        for (uint256 i = 0; i < results.length; i++) {
+            if (results[i].eventType == eventType && results[i].distanceInMeters > bestDistance) {
+                bestDistance = results[i].distanceInMeters;
+            }
+        }
+
+        qualified = bestDistance >= threshold;
+    }
+
+    // --- Internal Helpers ---
+
+    function _checkQualificationStandards(address athleteAddress, EventType eventType, uint256 distanceInMeters)
+        internal
+    {
+        for (uint256 i = 0; i < s_standardIds.length; i++) {
+            QualificationStandard memory std = s_qualificationStandards[s_standardIds[i]];
+            if (std.isActive && std.eventType == eventType && distanceInMeters >= std.distanceThresholdScaled) {
+                emit QualificationAchieved(athleteAddress, std.targetMeetId, eventType, distanceInMeters);
+            }
+        }
+    }
+
+    function _standardId(EventType eventType, string memory targetMeetId) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(uint8(eventType), targetMeetId));
     }
 
     // --- Getter Functions ---
@@ -194,10 +362,21 @@ contract AthleticRegistry is IAthleticRegistry {
         return s_hasOfficialSubmitted[athleteAddress][eventId][official];
     }
 
+    function getEligibility(address athleteAddress, string memory meetId)
+        external
+        view
+        returns (EligibilityAttestation memory)
+    {
+        return s_eligibility[athleteAddress][meetId];
+    }
+
     function getRequiredConsensus() public view returns (uint256) {
         uint256 totalOfficials = s_officials.length;
         if (totalOfficials == 0) return 0;
-        // Requires at least 90% of officials (rounded up via ceiling division)
         return (totalOfficials * 90 + 99) / 100;
+    }
+
+    function getAdmin() external view returns (address) {
+        return i_admin;
     }
 }

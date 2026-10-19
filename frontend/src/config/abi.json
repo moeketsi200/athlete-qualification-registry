@@ -1,0 +1,383 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "addOfficial",
+    "inputs": [
+      {
+        "name": "_official",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "getAthlete",
+    "inputs": [
+      {
+        "name": "athleteAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct AthleticRegistry.Athlete",
+        "components": [
+          {
+            "name": "athleteId",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "nationalIdHash",
+            "type": "bytes32",
+            "internalType": "bytes32"
+          },
+          {
+            "name": "isRegistered",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getAthleteResults",
+    "inputs": [
+      {
+        "name": "athleteAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple[]",
+        "internalType": "struct AthleticRegistry.MeetResult[]",
+        "components": [
+          {
+            "name": "eventId",
+            "type": "string",
+            "internalType": "string"
+          },
+          {
+            "name": "eventType",
+            "type": "uint8",
+            "internalType": "enum AthleticRegistry.EventType"
+          },
+          {
+            "name": "distanceInMeters",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "timestamp",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "officialAddress",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getOfficials",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address[]",
+        "internalType": "address[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getPendingResult",
+    "inputs": [
+      {
+        "name": "athleteAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "eventId",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "tuple",
+        "internalType": "struct AthleticRegistry.PendingResult",
+        "components": [
+          {
+            "name": "eventType",
+            "type": "uint8",
+            "internalType": "enum AthleticRegistry.EventType"
+          },
+          {
+            "name": "distanceInMeters",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "approvalCount",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "isCompleted",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getRequiredConsensus",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "hasOfficialSubmitted",
+    "inputs": [
+      {
+        "name": "athleteAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "eventId",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "official",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "isOfficial",
+    "inputs": [
+      {
+        "name": "officialAddress",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "recordResult",
+    "inputs": [
+      {
+        "name": "athleteAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "eventId",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "eventType",
+        "type": "uint8",
+        "internalType": "enum AthleticRegistry.EventType"
+      },
+      {
+        "name": "distanceInMeters",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "registerAthlete",
+    "inputs": [
+      {
+        "name": "athleteAddress",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "athleteId",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "nationalIdHash",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "event",
+    "name": "AthleteRegistered",
+    "inputs": [
+      {
+        "name": "athleteAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "athleteId",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "OfficialAdded",
+    "inputs": [
+      {
+        "name": "officialAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "ResultRecorded",
+    "inputs": [
+      {
+        "name": "athleteAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "eventId",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      },
+      {
+        "name": "eventType",
+        "type": "uint8",
+        "indexed": true,
+        "internalType": "enum AthleticRegistry.EventType"
+      },
+      {
+        "name": "distanceInMeters",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "officialAddress",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "AthleticRegistry__AlreadySubmitted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AthleticRegistry__DistanceMismatch",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AthleticRegistry__InvalidDistance",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AthleticRegistry__ResultFinalized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AthleticRegistry__UnauthorizedOfficial",
+    "inputs": []
+  }
+]

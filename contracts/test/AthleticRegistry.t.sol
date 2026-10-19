@@ -24,12 +24,14 @@ contract AthleticRegistryTest is Test {
         registry.addOfficial(official1);
         registry.addOfficial(official2);
 
-        // Register test athlete
-        registry.registerAthlete(athlete, "ATH-001", "Moeketsi", bytes32(0));
+        // Register test athlete (new signature: includes clubId)
+        registry.registerAthlete(athlete, "ATH-001", "Moeketsi", "CLUB-LP-01", bytes32(0));
         vm.stopPrank();
     }
 
-    // TEST 1: Happy Path - Official can record a result (requires 3 officials now for 90% supermajority)
+    // ─── RESULT RECORDING TESTS ──────────────────────────────────────
+
+    // TEST 1: Happy Path — Officials can record a result via 90% consensus
     function testOfficialCanRecordResult() public {
         vm.prank(official1);
         registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 1855);
@@ -51,22 +53,21 @@ contract AthleticRegistryTest is Test {
         assertEq(results[0].distanceInMeters, 1855);
     }
 
-    // TEST 2: Boundary - Bad Actor gets stopped
+    // TEST 2: Bad Actor blocked
     function testRevertsIfNonOfficialRecordsResult() public {
         vm.prank(badActor);
-
         vm.expectRevert(AthleticRegistry.AthleticRegistry__UnauthorizedOfficial.selector);
-
         registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 1855);
     }
 
-    // TEST 3: Boundary - Invalid Distance
+    // TEST 3: Invalid Distance blocked
     function testRevertsIfDistanceIsZero() public {
         vm.prank(official1);
-
         vm.expectRevert(AthleticRegistry.AthleticRegistry__InvalidDistance.selector);
         registry.recordResult(athlete, "MEET-1", AthleticRegistry.EventType.ShotPut, 0);
     }
+
+    // ─── OFFICIALS MANAGEMENT TESTS ──────────────────────────────────
 
     // TEST 4: Get List of Officials
     function testGetOfficials() public view {
@@ -81,21 +82,21 @@ contract AthleticRegistryTest is Test {
         assertFalse(registry.isOfficial(badActor));
     }
 
-    // TEST 5: addOfficial - Only admin can add
+    // TEST 5: Only admin can add officials
     function testRevertsIfNonAdminAddsOfficial() public {
         vm.prank(badActor);
-        vm.expectRevert("Only admin can add officials");
+        vm.expectRevert("Only admin");
         registry.addOfficial(badActor);
     }
 
-    // TEST 6: addOfficial - Invalid Address
+    // TEST 6: Zero address rejected
     function testRevertsIfAddOfficialZeroAddress() public {
         vm.prank(admin);
         vm.expectRevert("Invalid Official Address");
         registry.addOfficial(address(0));
     }
 
-    // TEST 7: addOfficial - Already added official does nothing duplicate
+    // TEST 7: Duplicate official does nothing
     function testAddAlreadyAddedOfficial() public {
         vm.prank(admin);
         registry.addOfficial(official1);
@@ -103,33 +104,148 @@ contract AthleticRegistryTest is Test {
         assertEq(officials.length, 3); // should still be 3
     }
 
-    // TEST 8: registerAthlete - Invalid Address
+    // ─── ATHLETE REGISTRATION TESTS ──────────────────────────────────
+
+    // TEST 8: Zero address rejected
     function testRevertsIfRegisterAthleteZeroAddress() public {
         vm.prank(admin);
         vm.expectRevert("Invalid Athlete Address");
-        registry.registerAthlete(address(0), "ATH-002", "Invalid", bytes32(0));
+        registry.registerAthlete(address(0), "ATH-002", "Invalid", "CLUB-X", bytes32(0));
     }
 
-    // TEST 9: registerAthlete - Already registered
+    // TEST 9: Already registered
     function testRevertsIfAthleteAlreadyRegistered() public {
         vm.prank(admin);
         vm.expectRevert("Athlete already registered");
-        registry.registerAthlete(athlete, "ATH-001", "Moeketsi", bytes32(0));
+        registry.registerAthlete(athlete, "ATH-001", "Moeketsi", "CLUB-LP-01", bytes32(0));
     }
 
-    // TEST 10: registerAthlete - Happy Path
-    function testGetAthlete() public {
+    // TEST 10: Happy path with clubId
+    function testGetAthleteWithClubId() public view {
         AthleticRegistry.Athlete memory registeredAthlete = registry.getAthlete(athlete);
         assertEq(registeredAthlete.athleteId, "ATH-001");
         assertEq(registeredAthlete.name, "Moeketsi");
+        assertEq(registeredAthlete.clubId, "CLUB-LP-01");
         assertTrue(registeredAthlete.isRegistered);
     }
 
-    // TEST 11: recordResult - Athlete not registered
+    // TEST 11: Unregistered athlete blocked from result recording
     function testRevertsIfRecordingForUnregisteredAthlete() public {
         vm.prank(official1);
         address unregisteredAthlete = makeAddr("unregistered");
         vm.expectRevert("Athlete is not registered");
         registry.recordResult(unregisteredAthlete, "MEET-2", AthleticRegistry.EventType.Discus, 1000);
+    }
+
+    // ─── PRE-MEET ELIGIBILITY TESTS ──────────────────────────────────
+
+    // TEST 12: Happy Path — Official can attest eligibility
+    function testAttestEligibility_HappyPath() public {
+        uint256 future = block.timestamp + 90 days;
+
+        vm.prank(official1);
+        registry.attestEligibility(athlete, "NATIONALS-2027", AthleticRegistry.EligibilityStatus.Cleared, future);
+
+        AthleticRegistry.EligibilityAttestation memory att = registry.getEligibility(athlete, "NATIONALS-2027");
+
+        assertEq(att.meetId, "NATIONALS-2027");
+        assertEq(uint8(att.status), uint8(AthleticRegistry.EligibilityStatus.Cleared));
+        assertEq(att.expiresAt, future);
+        assertEq(att.attestedBy, official1);
+        assertTrue(att.attestedAt > 0);
+    }
+
+    // TEST 13: Non-official cannot attest eligibility
+    function testRevertsIfNonOfficialAttestsEligibility() public {
+        uint256 future = block.timestamp + 90 days;
+        vm.prank(badActor);
+        vm.expectRevert(AthleticRegistry.AthleticRegistry__UnauthorizedOfficial.selector);
+        registry.attestEligibility(athlete, "NATIONALS-2027", AthleticRegistry.EligibilityStatus.Cleared, future);
+    }
+
+    // TEST 14: Unregistered athlete cannot have eligibility attested
+    function testRevertsIfEligibilityForUnregisteredAthlete() public {
+        uint256 future = block.timestamp + 90 days;
+        address unknown = makeAddr("unknown");
+        vm.prank(official1);
+        vm.expectRevert(AthleticRegistry.AthleticRegistry__AthleteNotRegistered.selector);
+        registry.attestEligibility(unknown, "NATIONALS-2027", AthleticRegistry.EligibilityStatus.Cleared, future);
+    }
+
+    // TEST 15: Past expiry rejected
+    function testRevertsIfEligibilityExpiryInPast() public {
+        vm.prank(official1);
+        vm.expectRevert("Expiry must be in future");
+        registry.attestEligibility(
+            athlete, "NATIONALS-2027", AthleticRegistry.EligibilityStatus.Cleared, block.timestamp - 1
+        );
+    }
+
+    // TEST 16: Denial attestation is recorded correctly
+    function testAttestEligibility_Denied() public {
+        uint256 future = block.timestamp + 30 days;
+        vm.prank(official1);
+        registry.attestEligibility(athlete, "AFRICA-CHAMPS-2027", AthleticRegistry.EligibilityStatus.Denied, future);
+
+        AthleticRegistry.EligibilityAttestation memory att = registry.getEligibility(athlete, "AFRICA-CHAMPS-2027");
+        assertEq(uint8(att.status), uint8(AthleticRegistry.EligibilityStatus.Denied));
+    }
+
+    // ─── QUALIFICATION STANDARDS TESTS ───────────────────────────────
+
+    // TEST 17: Admin can set a qualification standard and athlete qualifies
+    function testAthleteQualifiesAfterResult() public {
+        // Set standard: ShotPut >= 18.00m for NATIONALS-2027
+        vm.prank(admin);
+        registry.setQualificationStandard(AthleticRegistry.EventType.ShotPut, "NATIONALS-2027", 1800);
+
+        // Record a result of 18.55m (above threshold)
+        vm.prank(official1);
+        registry.recordResult(athlete, "TRIAL-1", AthleticRegistry.EventType.ShotPut, 1855);
+        vm.prank(official2);
+        registry.recordResult(athlete, "TRIAL-1", AthleticRegistry.EventType.ShotPut, 1855);
+        vm.prank(admin);
+        registry.recordResult(athlete, "TRIAL-1", AthleticRegistry.EventType.ShotPut, 1855);
+
+        (bool qualified, uint256 best, uint256 threshold) =
+            registry.checkQualified(athlete, AthleticRegistry.EventType.ShotPut, "NATIONALS-2027");
+        assertTrue(qualified);
+        assertEq(best, 1855);
+        assertEq(threshold, 1800);
+    }
+
+    // TEST 18: Athlete does NOT qualify if below threshold
+    function testAthleteDoesNotQualifyBelowThreshold() public {
+        // Set standard: ShotPut >= 21.00m
+        vm.prank(admin);
+        registry.setQualificationStandard(AthleticRegistry.EventType.ShotPut, "WORLD-ATHLETICS-2027", 2100);
+
+        // Record a result of only 18.55m
+        vm.prank(official1);
+        registry.recordResult(athlete, "TRIAL-2", AthleticRegistry.EventType.ShotPut, 1855);
+        vm.prank(official2);
+        registry.recordResult(athlete, "TRIAL-2", AthleticRegistry.EventType.ShotPut, 1855);
+        vm.prank(admin);
+        registry.recordResult(athlete, "TRIAL-2", AthleticRegistry.EventType.ShotPut, 1855);
+
+        (bool qualified,,) =
+            registry.checkQualified(athlete, AthleticRegistry.EventType.ShotPut, "WORLD-ATHLETICS-2027");
+        assertFalse(qualified);
+    }
+
+    // TEST 19: No standard returns false, zeros
+    function testNoStandardReturnsNotQualified() public view {
+        (bool qualified, uint256 best, uint256 threshold) =
+            registry.checkQualified(athlete, AthleticRegistry.EventType.Discus, "NONEXISTENT-MEET");
+        assertFalse(qualified);
+        assertEq(best, 0);
+        assertEq(threshold, 0);
+    }
+
+    // TEST 20: Non-admin cannot set standards
+    function testRevertsIfNonAdminSetsStandard() public {
+        vm.prank(badActor);
+        vm.expectRevert("Only admin");
+        registry.setQualificationStandard(AthleticRegistry.EventType.ShotPut, "NATIONALS-2027", 1800);
     }
 }

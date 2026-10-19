@@ -1,6 +1,9 @@
 # Compiler files
 cache/
 out/
+artifacts/
+.deps/
+.states/
 
 # Node / Frontend
 node_modules/

@@ -167,22 +167,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Wallet Action Button with Balance Tag */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            {wallet.isConnected && wallet.balance && (
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid var(--border-glass-bright)',
-                borderRadius: '12px',
-                padding: '0.55rem 0.85rem',
-                fontSize: '0.82rem',
-                color: 'var(--text-main)',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.45rem'
-              }}>
-                <Coins size={14} color="#fbbf24" /> {wallet.balance}
-              </div>
-            )}
 
             <button
               onClick={connectWallet}

@@ -7,9 +7,9 @@ An immutable, transparent, and cryptographically verifiable ledger for regional 
 
 ## 📌 Problem & Problem Statement
 
-Regional track and field qualification records frequently suffer from administrative disputes, missing paperwork, or post-event registration disqualifications. 
+Regional track and field qualification records suffer from administrative disputes, missing paperwork, and delayed verification.
 
-The **Decentralized Athletic Qualification Registry** solves this by storing performance records on an immutable blockchain ledger. Once a distance is logged on-chain by an authorized meet official, the athlete's qualification status is cryptographically verifiable and cannot be retroactively altered by regional management.
+The **Decentralized Athletic Qualification Registry** addresses this by creating a tamper-evident, time-stamped record of athlete eligibility and official performances. Once an athlete is pre-cleared by authorized officials and a result is attested via multi-signature consensus at the event, the qualification record becomes cryptographically verifiable and far less vulnerable to administrative delay, dispute, or paperwork loss.
 
 ---
 
@@ -37,7 +37,7 @@ athlete-qualification-registry/
 │   │   └── DeployAthleticRegistry.s.sol   # Foundry deployment script
 │   │
 │   └── test/
-│       └── AthleticRegistry.t.sol         # Foundry test suite (11/11 passing, 100% coverage)
+│       └── AthleticRegistry.t.sol         # Foundry test suite (20/20 passing, 100% coverage)
 │
 ├── frontend/
 │   ├── src/
@@ -90,21 +90,30 @@ forge build
 forge test -vvv
 ```
 
-**Test Results (11/11 Passed, 100% Coverage)**:
+**Test Results (20/20 Passed, 100% Coverage)**:
 ```text
-Ran 11 tests for contracts/test/AthleticRegistry.t.sol:AthleticRegistryTest
-[PASS] testAddAlreadyAddedOfficial() (gas: 27418)
-[PASS] testGetAthlete() (gas: 26344)
-[PASS] testGetOfficials() (gas: 32747)
-[PASS] testOfficialCanRecordResult() (gas: 144181)
-[PASS] testRevertsIfAddOfficialZeroAddress() (gas: 14107)
-[PASS] testRevertsIfAthleteAlreadyRegistered() (gas: 18442)
+Ran 20 tests for contracts/test/AthleticRegistry.t.sol:AthleticRegistryTest
+[PASS] testAddAlreadyAddedOfficial() (gas: 30315)
+[PASS] testAthleteDoesNotQualifyBelowThreshold() (gas: 432421)
+[PASS] testAthleteQualifiesAfterResult() (gas: 435710)
+[PASS] testAttestEligibility_Denied() (gas: 142281)
+[PASS] testAttestEligibility_HappyPath() (gas: 143799)
+[PASS] testGetAthleteWithClubId() (gas: 31368)
+[PASS] testGetOfficials() (gas: 42007)
+[PASS] testNoStandardReturnsNotQualified() (gas: 20294)
+[PASS] testOfficialCanRecordResult() (gas: 314841)
+[PASS] testRevertsIfAddOfficialZeroAddress() (gas: 14241)
+[PASS] testRevertsIfAthleteAlreadyRegistered() (gas: 19335)
 [PASS] testRevertsIfDistanceIsZero() (gas: 19843)
-[PASS] testRevertsIfNonAdminAddsOfficial() (gas: 14274)
-[PASS] testRevertsIfNonOfficialRecordsResult() (gas: 17555)
-[PASS] testRevertsIfRecordingForUnregisteredAthlete() (gas: 20123)
-[PASS] testRevertsIfRegisterAthleteZeroAddress() (gas: 14037)
-Suite result: ok. 11 passed; 0 failed; 0 skipped
+[PASS] testRevertsIfEligibilityExpiryInPast() (gas: 20276)
+[PASS] testRevertsIfEligibilityForUnregisteredAthlete() (gas: 19867)
+[PASS] testRevertsIfNonAdminAddsOfficial() (gas: 14341)
+[PASS] testRevertsIfNonAdminSetsStandard() (gas: 15441)
+[PASS] testRevertsIfNonOfficialAttestsEligibility() (gas: 17626)
+[PASS] testRevertsIfNonOfficialRecordsResult() (gas: 17665)
+[PASS] testRevertsIfRecordingForUnregisteredAthlete() (gas: 20212)
+[PASS] testRevertsIfRegisterAthleteZeroAddress() (gas: 14908)
+Suite result: ok. 20 passed; 0 failed; 0 skipped
 ```
 
 ### Run Deployment Script Simulation

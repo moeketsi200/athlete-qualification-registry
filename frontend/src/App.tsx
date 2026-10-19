@@ -17,8 +17,10 @@ export default function App() {
     results,
     pendingResults,
     officials,
+    eligibilities,
     registerAthlete,
     recordResult,
+    attestEligibility,
     addOfficial,
     isProcessing,
     txMessage,
@@ -135,9 +137,11 @@ export default function App() {
             switchWallet={switchWallet}
             athletes={athletes}
             officials={officials}
+            eligibilities={eligibilities}
             pendingResults={pendingResults}
             recordResult={recordResult}
             registerAthlete={registerAthlete}
+            attestEligibility={attestEligibility}
             addOfficial={addOfficial}
             isProcessing={isProcessing}
             txMessage={txMessage}

@@ -12,6 +12,8 @@ contract AthleticRegistry is IAthleticRegistry {
     error AthleticRegistry__ResultFinalized();
     error AthleticRegistry__EligibilityExpired();
     error AthleticRegistry__AthleteNotRegistered();
+    error AthleticRegistry__AthleteEligibilityDenied();
+    error AthleticRegistry__AthleteNotCleared();
 
     enum EventType {
         ShotPut,
@@ -207,6 +209,21 @@ contract AthleticRegistry is IAthleticRegistry {
 
         if (distanceInMeters == 0) {
             revert AthleticRegistry__InvalidDistance();
+        }
+
+        // Mandatory pre-meet eligibility verification
+        EligibilityAttestation memory att = s_eligibility[athleteAddress][eventId];
+        if (att.attestedAt == 0) {
+            revert AthleticRegistry__AthleteNotCleared();
+        }
+        if (att.status == EligibilityStatus.Denied) {
+            revert AthleticRegistry__AthleteEligibilityDenied();
+        }
+        if (att.status != EligibilityStatus.Cleared) {
+            revert AthleticRegistry__AthleteNotCleared();
+        }
+        if (block.timestamp > att.expiresAt) {
+            revert AthleticRegistry__EligibilityExpired();
         }
 
         if (s_hasOfficialSubmitted[athleteAddress][eventId][msg.sender]) {

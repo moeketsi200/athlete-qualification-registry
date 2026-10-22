@@ -26,6 +26,17 @@ contract AthleticRegistryTest is Test {
 
         // Register test athlete (new signature: includes clubId)
         registry.registerAthlete(athlete, "ATH-001", "Moeketsi", "CLUB-LP-01", bytes32(0));
+
+        // Pre-clear athlete for testing meets
+        registry.attestEligibility(
+            athlete, "MEET-1", AthleticRegistry.EligibilityStatus.Cleared, block.timestamp + 30 days
+        );
+        registry.attestEligibility(
+            athlete, "TRIAL-1", AthleticRegistry.EligibilityStatus.Cleared, block.timestamp + 30 days
+        );
+        registry.attestEligibility(
+            athlete, "TRIAL-2", AthleticRegistry.EligibilityStatus.Cleared, block.timestamp + 30 days
+        );
         vm.stopPrank();
     }
 
@@ -247,5 +258,77 @@ contract AthleticRegistryTest is Test {
         vm.prank(badActor);
         vm.expectRevert("Only admin");
         registry.setQualificationStandard(AthleticRegistry.EventType.ShotPut, "NATIONALS-2027", 1800);
+    }
+
+    // ─── ELIGIBILITY ENFORCEMENT ON RESULT RECORDING ──────────────────
+
+    // TEST 21: Athlete with DENIED eligibility cannot have results recorded
+    function testRevertsIfAthleteEligibilityDenied() public {
+        uint256 future = block.timestamp + 30 days;
+        // Official denies eligibility for AFRICA-CHAMPS-2027
+        vm.prank(official1);
+        registry.attestEligibility(athlete, "AFRICA-CHAMPS-2027", AthleticRegistry.EligibilityStatus.Denied, future);
+
+        // Attempting to record a result for the denied meet must revert
+        vm.prank(official1);
+        vm.expectRevert(AthleticRegistry.AthleticRegistry__AthleteEligibilityDenied.selector);
+        registry.recordResult(athlete, "AFRICA-CHAMPS-2027", AthleticRegistry.EventType.Discus, 6787);
+    }
+
+    // TEST 22: Athlete with PENDING eligibility cannot have results recorded
+    function testRevertsIfAthleteEligibilityPending() public {
+        uint256 future = block.timestamp + 30 days;
+        // Official leaves eligibility pending
+        vm.prank(official1);
+        registry.attestEligibility(athlete, "NATIONALS-2027", AthleticRegistry.EligibilityStatus.Pending, future);
+
+        // Attempting to record result while pending must revert
+        vm.prank(official1);
+        vm.expectRevert(AthleticRegistry.AthleticRegistry__AthleteNotCleared.selector);
+        registry.recordResult(athlete, "NATIONALS-2027", AthleticRegistry.EventType.ShotPut, 2145);
+    }
+
+    // TEST 23: Athlete with EXPIRED clearance cannot have results recorded
+    function testRevertsIfAthleteEligibilityExpired() public {
+        uint256 future = block.timestamp + 1 days;
+        // Official clears athlete for 1 day
+        vm.prank(official1);
+        registry.attestEligibility(athlete, "OLYMPICS-2028", AthleticRegistry.EligibilityStatus.Cleared, future);
+
+        // Time passes beyond expiration
+        vm.warp(block.timestamp + 2 days);
+
+        // Attempting to record result with expired clearance must revert
+        vm.prank(official1);
+        vm.expectRevert(AthleticRegistry.AthleticRegistry__EligibilityExpired.selector);
+        registry.recordResult(athlete, "OLYMPICS-2028", AthleticRegistry.EventType.Javelin, 8500);
+    }
+
+    // TEST 24: Athlete with valid CLEARED eligibility records successfully
+    function testOfficialCanRecordResultWhenCleared() public {
+        uint256 future = block.timestamp + 30 days;
+        // Official clears athlete
+        vm.prank(official1);
+        registry.attestEligibility(athlete, "AFRICA-CHAMPS-2027", AthleticRegistry.EligibilityStatus.Cleared, future);
+
+        // Consensus result recording passes
+        vm.prank(official1);
+        registry.recordResult(athlete, "AFRICA-CHAMPS-2027", AthleticRegistry.EventType.Discus, 6787);
+        vm.prank(official2);
+        registry.recordResult(athlete, "AFRICA-CHAMPS-2027", AthleticRegistry.EventType.Discus, 6787);
+        vm.prank(admin);
+        registry.recordResult(athlete, "AFRICA-CHAMPS-2027", AthleticRegistry.EventType.Discus, 6787);
+
+        AthleticRegistry.MeetResult[] memory res = registry.getAthleteResults(athlete);
+        assertEq(res.length, 1);
+        assertEq(res[0].distanceInMeters, 6787);
+    }
+
+    // TEST 25: Athlete with NO pre-meet clearance cannot have results recorded
+    function testRevertsIfAthleteHasNoPreMeetClearance() public {
+        // Attempting to record result for UNCLEARED-MEET without any prior attestation must revert
+        vm.prank(official1);
+        vm.expectRevert(AthleticRegistry.AthleticRegistry__AthleteNotCleared.selector);
+        registry.recordResult(athlete, "UNCLEARED-MEET", AthleticRegistry.EventType.ShotPut, 2145);
     }
 }

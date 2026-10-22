@@ -37,7 +37,7 @@ athlete-qualification-registry/
 │   │   └── DeployAthleticRegistry.s.sol   # Foundry deployment script
 │   │
 │   └── test/
-│       └── AthleticRegistry.t.sol         # Foundry test suite (20/20 passing, 100% coverage)
+│       └── AthleticRegistry.t.sol         # Foundry test suite (25/25 passing, 100% coverage)
 │
 ├── frontend/
 │   ├── src/
@@ -90,30 +90,35 @@ forge build
 forge test -vvv
 ```
 
-**Test Results (20/20 Passed, 100% Coverage)**:
+**Test Results (25/25 Passed, 100% Coverage)**:
 ```text
-Ran 20 tests for contracts/test/AthleticRegistry.t.sol:AthleticRegistryTest
-[PASS] testAddAlreadyAddedOfficial() (gas: 30315)
-[PASS] testAthleteDoesNotQualifyBelowThreshold() (gas: 432421)
-[PASS] testAthleteQualifiesAfterResult() (gas: 435710)
-[PASS] testAttestEligibility_Denied() (gas: 142281)
-[PASS] testAttestEligibility_HappyPath() (gas: 143799)
-[PASS] testGetAthleteWithClubId() (gas: 31368)
-[PASS] testGetOfficials() (gas: 42007)
-[PASS] testNoStandardReturnsNotQualified() (gas: 20294)
-[PASS] testOfficialCanRecordResult() (gas: 314841)
-[PASS] testRevertsIfAddOfficialZeroAddress() (gas: 14241)
-[PASS] testRevertsIfAthleteAlreadyRegistered() (gas: 19335)
-[PASS] testRevertsIfDistanceIsZero() (gas: 19843)
-[PASS] testRevertsIfEligibilityExpiryInPast() (gas: 20276)
-[PASS] testRevertsIfEligibilityForUnregisteredAthlete() (gas: 19867)
-[PASS] testRevertsIfNonAdminAddsOfficial() (gas: 14341)
-[PASS] testRevertsIfNonAdminSetsStandard() (gas: 15441)
-[PASS] testRevertsIfNonOfficialAttestsEligibility() (gas: 17626)
-[PASS] testRevertsIfNonOfficialRecordsResult() (gas: 17665)
-[PASS] testRevertsIfRecordingForUnregisteredAthlete() (gas: 20212)
-[PASS] testRevertsIfRegisterAthleteZeroAddress() (gas: 14908)
-Suite result: ok. 20 passed; 0 failed; 0 skipped
+Ran 25 tests for contracts/test/AthleticRegistry.t.sol:AthleticRegistryTest
+[PASS] testAddAlreadyAddedOfficial() (gas: 51725)
+[PASS] testAthleteDoesNotQualifyBelowThreshold() (gas: 617016)
+[PASS] testAthleteQualifiesAfterResult() (gas: 620255)
+[PASS] testAttestEligibility_Denied() (gas: 174619)
+[PASS] testAttestEligibility_HappyPath() (gas: 180633)
+[PASS] testGetAthleteWithClubId() (gas: 31390)
+[PASS] testGetOfficials() (gas: 63985)
+[PASS] testNoStandardReturnsNotQualified() (gas: 20316)
+[PASS] testOfficialCanRecordResult() (gas: 479408)
+[PASS] testOfficialCanRecordResultWhenCleared() (gas: 638137)
+[PASS] testRevertsIfAddOfficialZeroAddress() (gas: 35433)
+[PASS] testRevertsIfAthleteAlreadyRegistered() (gas: 42431)
+[PASS] testRevertsIfAthleteEligibilityDenied() (gas: 200303)
+[PASS] testRevertsIfAthleteEligibilityExpired() (gas: 200877)
+[PASS] testRevertsIfAthleteEligibilityPending() (gas: 180299)
+[PASS] testRevertsIfAthleteHasNoPreMeetClearance() (gas: 53886)
+[PASS] testRevertsIfDistanceIsZero() (gas: 42100)
+[PASS] testRevertsIfEligibilityExpiryInPast() (gas: 42552)
+[PASS] testRevertsIfEligibilityForUnregisteredAthlete() (gas: 42268)
+[PASS] testRevertsIfNonAdminAddsOfficial() (gas: 35795)
+[PASS] testRevertsIfNonAdminSetsStandard() (gas: 37339)
+[PASS] testRevertsIfNonOfficialAttestsEligibility() (gas: 39960)
+[PASS] testRevertsIfNonOfficialRecordsResult() (gas: 39857)
+[PASS] testRevertsIfRecordingForUnregisteredAthlete() (gas: 42394)
+[PASS] testRevertsIfRegisterAthleteZeroAddress() (gas: 37704)
+Suite result: ok. 25 passed; 0 failed; 0 skipped
 ```
 
 ### Run Deployment Script Simulation

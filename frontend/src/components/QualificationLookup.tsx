@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Search, Award, CheckCircle2, Calendar, Hash, ExternalLink, Sparkles, Trophy, Disc, Activity, Layers } from 'lucide-react';
-import { Athlete, MeetResult, EventType, EventTypeNames } from '../types/registry';
+import { Search, Award, CheckCircle2, Calendar, Hash, ExternalLink, Sparkles, Trophy, Disc, Activity, Layers, XCircle, AlertTriangle, Clock, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Athlete, MeetResult, EventType, EventTypeNames, EligibilityAttestation, EligibilityStatus } from '../types/registry';
 
 interface QualificationLookupProps {
   athletes: Record<string, Athlete>;
   results: Record<string, MeetResult[]>;
+  eligibilities?: Record<string, EligibilityAttestation[]>;
 }
 
 // Benchmark standard distances for visual qualification meters
@@ -15,7 +16,7 @@ const EVENT_BENCHMARKS: Record<EventType, number> = {
   [EventType.Other]: 50.00
 };
 
-export const QualificationLookup: React.FC<QualificationLookupProps> = ({ athletes, results }) => {
+export const QualificationLookup: React.FC<QualificationLookupProps> = ({ athletes, results, eligibilities = {} }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEventType, setSelectedEventType] = useState<string>('ALL');
 
@@ -257,10 +258,27 @@ export const QualificationLookup: React.FC<QualificationLookupProps> = ({ athlet
                         const benchmark = EVENT_BENCHMARKS[result.eventType] || 50;
                         const percentage = Math.min(100, Math.max(15, (result.distanceInMeters / benchmark) * 100));
 
+                        // Pre-meet eligibility verification for this specific meet
+                        const clearance = (eligibilities[athlete.address] || []).find(e => e.meetId === result.eventId);
+                        const isMissingClearance = !clearance;
+                        const isDenied = clearance?.status === EligibilityStatus.Denied;
+                        const isPending = clearance?.status === EligibilityStatus.Pending;
+                        const isExpired = clearance ? clearance.expiresAt < Math.floor(Date.now() / 1000) : false;
+                        const isCleared = clearance?.status === EligibilityStatus.Cleared && !isExpired;
+
                         return (
                           <div key={idx} style={{
-                            background: 'rgba(10, 16, 30, 0.7)',
-                            border: '1px solid var(--border-glass-bright)',
+                            background: (isDenied || isMissingClearance)
+                              ? 'rgba(239, 68, 68, 0.08)' 
+                              : isPending
+                              ? 'rgba(245, 158, 11, 0.06)'
+                              : 'rgba(10, 16, 30, 0.7)',
+                            border: (isDenied || isMissingClearance)
+                              ? '1px solid rgba(239, 68, 68, 0.45)' 
+                              : isPending
+                              ? '1px solid rgba(245, 158, 11, 0.4)'
+                              : '1px solid var(--border-glass-bright)',
+                            boxShadow: (isDenied || isMissingClearance) ? '0 0 20px rgba(239, 68, 68, 0.15)' : 'none',
                             borderRadius: '16px',
                             padding: '1.25rem',
                             display: 'flex',
@@ -269,22 +287,77 @@ export const QualificationLookup: React.FC<QualificationLookupProps> = ({ athlet
                             transition: 'all 0.25s ease'
                           }}>
                             <div>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-                                <span className="badge badge-gold">
-                                  {result.eventType === EventType.ShotPut && <Activity size={12} />}
-                                  {result.eventType === EventType.Discus && <Disc size={12} />}
-                                  {result.eventType === EventType.Javelin && <Layers size={12} />}
-                                  {EventTypeNames[result.eventType] || 'Event'}
-                                </span>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  <span className="badge badge-gold">
+                                    {result.eventType === EventType.ShotPut && <Activity size={12} />}
+                                    {result.eventType === EventType.Discus && <Disc size={12} />}
+                                    {result.eventType === EventType.Javelin && <Layers size={12} />}
+                                    {EventTypeNames[result.eventType] || 'Event'}
+                                  </span>
+                                  {isDenied && (
+                                    <span className="badge badge-red" style={{ background: 'rgba(239, 68, 68, 0.25)', border: '1px solid #ef4444', color: '#fca5a5' }}>
+                                      <XCircle size={12} /> VOID / DISQUALIFIED
+                                    </span>
+                                  )}
+                                  {isMissingClearance && (
+                                    <span className="badge badge-red" style={{ background: 'rgba(239, 68, 68, 0.25)', border: '1px solid #ef4444', color: '#fca5a5' }}>
+                                      <AlertTriangle size={12} /> NO PRE-CLEARANCE
+                                    </span>
+                                  )}
+                                  {isPending && (
+                                    <span className="badge badge-gold" style={{ background: 'rgba(245, 158, 11, 0.25)', border: '1px solid #f59e0b', color: '#fbbf24' }}>
+                                      <Clock size={12} /> PENDING CLEARANCE
+                                    </span>
+                                  )}
+                                  {isExpired && (
+                                    <span className="badge badge-red" style={{ background: 'rgba(239, 68, 68, 0.25)', border: '1px solid #ef4444', color: '#fca5a5' }}>
+                                      <AlertTriangle size={12} /> CLEARANCE EXPIRED
+                                    </span>
+                                  )}
+                                  {isCleared && (
+                                    <span className="badge badge-green" style={{ background: 'rgba(16, 185, 129, 0.2)', border: '1px solid #10b981', color: '#34d399' }}>
+                                      <ShieldCheck size={12} /> CLEARED
+                                    </span>
+                                  )}
+                                </div>
                                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                                   <Calendar size={12} />
                                   {new Date(result.timestamp * 1000).toLocaleDateString()}
                                 </span>
                               </div>
 
-                              <div style={{ fontSize: '1.85rem', fontWeight: 900, margin: '0.4rem 0' }} className="gradient-text-cyan">
+                              <div style={{
+                                fontSize: '1.85rem',
+                                fontWeight: 900,
+                                margin: '0.4rem 0',
+                                textDecoration: (isDenied || isMissingClearance) ? 'line-through' : 'none',
+                                opacity: (isDenied || isMissingClearance) ? 0.6 : 1
+                              }} className={(isDenied || isMissingClearance) ? '' : 'gradient-text-cyan'}>
                                 {result.distanceInMeters.toFixed(2)}m
                               </div>
+
+                              {(isDenied || isMissingClearance) && (
+                                <div style={{
+                                  background: 'rgba(239, 68, 68, 0.15)',
+                                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                                  borderRadius: '8px',
+                                  padding: '0.45rem 0.65rem',
+                                  color: '#fca5a5',
+                                  fontSize: '0.75rem',
+                                  marginBottom: '0.65rem',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.4rem'
+                                }}>
+                                  <ShieldAlert size={14} color="#f87171" style={{ flexShrink: 0 }} />
+                                  <span>
+                                    <strong>Audit Alert:</strong> {isDenied 
+                                      ? `Pre-Meet Clearance was DENIED on-chain for ${result.eventId}. This mark is voided.`
+                                      : `No on-chain pre-meet clearance found for ${result.eventId}. Competing without prior clearance is prohibited.`}
+                                  </span>
+                                </div>
+                              )}
 
                               {/* Distance Performance Bar */}
                               <div style={{ margin: '0.75rem 0' }}>
@@ -292,7 +365,9 @@ export const QualificationLookup: React.FC<QualificationLookupProps> = ({ athlet
                                   <div style={{
                                     height: '100%',
                                     width: `${percentage}%`,
-                                    background: 'linear-gradient(90deg, #06b6d4 0%, #38bdf8 50%, #fbbf24 100%)',
+                                    background: (isDenied || isMissingClearance)
+                                      ? '#ef4444' 
+                                      : 'linear-gradient(90deg, #06b6d4 0%, #38bdf8 50%, #fbbf24 100%)',
                                     borderRadius: 4
                                   }}></div>
                                 </div>

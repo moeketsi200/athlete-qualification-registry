@@ -96,6 +96,20 @@ const INITIAL_ELIGIBILITIES: Record<string, EligibilityAttestation[]> = {
       attestedAt: Math.floor(Date.now() / 1000) - 86400 * 10,
       expiresAt: Math.floor(Date.now() / 1000) + 86400 * 60,
       attestedBy: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd'
+    },
+    {
+      meetId: 'AFRICA-CHAMP-2026-SP',
+      status: EligibilityStatus.Cleared,
+      attestedAt: Math.floor(Date.now() / 1000) - 86400 * 10,
+      expiresAt: Math.floor(Date.now() / 1000) + 86400 * 60,
+      attestedBy: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd'
+    },
+    {
+      meetId: 'DIAMOND-LEAGUE-QUAL-01',
+      status: EligibilityStatus.Cleared,
+      attestedAt: Math.floor(Date.now() / 1000) - 86400 * 20,
+      expiresAt: Math.floor(Date.now() / 1000) + 86400 * 60,
+      attestedBy: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd'
     }
   ],
   '0x70997970C51812dc3A010C7d01b50e0d17dc79C8': [
@@ -105,6 +119,13 @@ const INITIAL_ELIGIBILITIES: Record<string, EligibilityAttestation[]> = {
       attestedAt: Math.floor(Date.now() / 1000) - 86400 * 5,
       expiresAt: Math.floor(Date.now() / 1000) + 86400 * 90,
       attestedBy: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd'
+    },
+    {
+      meetId: 'AFRICA-CHAMP-2026-DT',
+      status: EligibilityStatus.Cleared,
+      attestedAt: Math.floor(Date.now() / 1000) - 86400 * 10,
+      expiresAt: Math.floor(Date.now() / 1000) + 86400 * 90,
+      attestedBy: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd'
     }
   ],
   '0x3C44CdD47a3580c4035460A37A3e89547b744d0E': [
@@ -112,6 +133,13 @@ const INITIAL_ELIGIBILITIES: Record<string, EligibilityAttestation[]> = {
       meetId: 'NATIONALS-2027',
       status: EligibilityStatus.Pending,
       attestedAt: Math.floor(Date.now() / 1000) - 86400 * 1,
+      expiresAt: Math.floor(Date.now() / 1000) + 86400 * 90,
+      attestedBy: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd'
+    },
+    {
+      meetId: 'NATIONAL-TRIALS-JT',
+      status: EligibilityStatus.Cleared,
+      attestedAt: Math.floor(Date.now() / 1000) - 86400 * 12,
       expiresAt: Math.floor(Date.now() / 1000) + 86400 * 90,
       attestedBy: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd'
     }
@@ -332,6 +360,30 @@ export function useWeb3Registry() {
       throw new Error('Reverted: Athlete is not registered on-chain!');
     }
 
+    // Mandatory pre-meet eligibility verification
+    const athleteClearances = eligibilities[formattedAddr] || [];
+    const clearance = athleteClearances.find(c => c.meetId === eventId);
+    if (!clearance) {
+      setIsProcessing(false);
+      setTxMessage(null);
+      throw new Error(`Reverted: AthleticRegistry__AthleteNotCleared() — Athlete has NO pre-meet clearance on-chain for "${eventId}". Pre-meet clearance is mandatory!`);
+    }
+    if (clearance.status === EligibilityStatus.Denied) {
+      setIsProcessing(false);
+      setTxMessage(null);
+      throw new Error(`Reverted: AthleticRegistry__AthleteEligibilityDenied() — Pre-meet clearance is DENIED for "${eventId}"!`);
+    }
+    if (clearance.status !== EligibilityStatus.Cleared) {
+      setIsProcessing(false);
+      setTxMessage(null);
+      throw new Error(`Reverted: AthleticRegistry__AthleteNotCleared() — Pre-meet clearance is still PENDING for "${eventId}"!`);
+    }
+    if (clearance.expiresAt < Math.floor(Date.now() / 1000)) {
+      setIsProcessing(false);
+      setTxMessage(null);
+      throw new Error(`Reverted: AthleticRegistry__EligibilityExpired() — Pre-meet clearance for "${eventId}" has EXPIRED!`);
+    }
+
     const pendingKey = `${formattedAddr}-${eventId}`;
     const pending = pendingResults[pendingKey];
     const currentWalletAddr = wallet.address || '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd';
@@ -399,7 +451,7 @@ export function useWeb3Registry() {
       setTimeout(() => setTxMessage(null), 4000);
       return newResult;
     }
-  }, [wallet, athletes, pendingResults, officialsList]);
+  }, [wallet, athletes, pendingResults, officialsList, eligibilities]);
 
   // ─── Eligibility Attestation ──────────────────────────
 

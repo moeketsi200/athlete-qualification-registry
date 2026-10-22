@@ -130,6 +130,7 @@ export default function App() {
           <QualificationLookup
             athletes={athletes}
             results={results}
+            eligibilities={eligibilities}
           />
         ) : (
           <OfficialDashboard

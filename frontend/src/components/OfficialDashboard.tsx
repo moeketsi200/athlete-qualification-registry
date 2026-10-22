@@ -478,20 +478,84 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
             {/* Field 2: Event / Meet ID */}
             <div>
               <label className="form-label">Event / Meet ID *</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="e.g. AFRICA-CHAMP-2026-SP"
-                value={eventId}
-                onChange={e => setEventId(e.target.value)}
-                required
-                style={{
-                  borderRadius: '14px',
-                  background: 'rgba(10, 16, 30, 0.85)',
-                  border: eventId ? '1px solid var(--primary-cyan)' : '1px solid var(--border-glass-bright)',
-                  fontFamily: 'var(--font-mono)'
-                }}
-              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <select
+                  className="form-input"
+                  value={['NATIONALS-2027', 'AFRICA-CHAMPS-2027', 'WORLD-ATHLETICS-2027'].includes(eventId) ? eventId : (eventId ? 'CUSTOM' : '')}
+                  onChange={e => {
+                    if (e.target.value === 'CUSTOM') {
+                      setEventId('');
+                    } else {
+                      setEventId(e.target.value);
+                    }
+                  }}
+                  style={{
+                    borderRadius: '14px',
+                    background: 'rgba(10, 16, 30, 0.85)',
+                    border: eventId ? '1px solid var(--primary-cyan)' : '1px solid var(--border-glass-bright)',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <option value="">-- Select an Event / Meet --</option>
+                  <option value="NATIONALS-2027">
+                    NATIONALS-2027 (South African National Championships)
+                    {selectedAthleteAddr && (eligibilities[selectedAthleteAddr] || []).find(c => c.meetId === 'NATIONALS-2027')?.status === EligibilityStatus.Cleared ? ' — Cleared ✅' : (eligibilities[selectedAthleteAddr] || []).find(c => c.meetId === 'NATIONALS-2027')?.status === EligibilityStatus.Denied ? ' — Denied ❌' : ''}
+                  </option>
+                  <option value="AFRICA-CHAMPS-2027">
+                    AFRICA-CHAMPS-2027 (African Senior Athletics Championships)
+                    {selectedAthleteAddr && (eligibilities[selectedAthleteAddr] || []).find(c => c.meetId === 'AFRICA-CHAMPS-2027')?.status === EligibilityStatus.Cleared ? ' — Cleared ✅' : (eligibilities[selectedAthleteAddr] || []).find(c => c.meetId === 'AFRICA-CHAMPS-2027')?.status === EligibilityStatus.Denied ? ' — Denied ❌' : ''}
+                  </option>
+                  <option value="WORLD-ATHLETICS-2027">
+                    WORLD-ATHLETICS-2027 (World Athletics Tour Qualifier)
+                    {selectedAthleteAddr && (eligibilities[selectedAthleteAddr] || []).find(c => c.meetId === 'WORLD-ATHLETICS-2027')?.status === EligibilityStatus.Cleared ? ' — Cleared ✅' : (eligibilities[selectedAthleteAddr] || []).find(c => c.meetId === 'WORLD-ATHLETICS-2027')?.status === EligibilityStatus.Denied ? ' — Denied ❌' : ''}
+                  </option>
+                  <option value="CUSTOM">Type Custom Meet ID...</option>
+                </select>
+
+                {/* Custom input if not preset or if custom is typed */}
+                {(!['NATIONALS-2027', 'AFRICA-CHAMPS-2027', 'WORLD-ATHLETICS-2027'].includes(eventId)) && (
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Type custom Meet ID (e.g. OLYMPICS-2028)"
+                    value={eventId}
+                    onChange={e => setEventId(e.target.value)}
+                    required
+                    style={{
+                      borderRadius: '12px',
+                      background: 'rgba(10, 16, 30, 0.85)',
+                      border: '1px solid var(--border-glass-bright)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.88rem'
+                    }}
+                  />
+                )}
+
+                {/* Quick-fill pill buttons */}
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  {['NATIONALS-2027', 'AFRICA-CHAMPS-2027', 'WORLD-ATHLETICS-2027'].map(m => {
+                    const cl = selectedAthleteAddr ? (eligibilities[selectedAthleteAddr] || []).find(c => c.meetId === m) : null;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setEventId(m)}
+                        className={`badge ${eventId === m ? 'badge-cyan' : 'badge-gold'}`}
+                        style={{
+                          cursor: 'pointer',
+                          fontFamily: 'var(--font-mono)',
+                          textTransform: 'none',
+                          fontSize: '0.72rem',
+                          border: eventId === m ? '1px solid #06b6d4' : undefined
+                        }}
+                      >
+                        {m} {cl?.status === EligibilityStatus.Cleared ? '✅' : cl?.status === EligibilityStatus.Denied ? '❌' : ''}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {/* Field 3: Event Type */}
@@ -1171,28 +1235,59 @@ export const OfficialDashboard: React.FC<OfficialDashboardProps> = ({
               {/* Meet ID */}
               <div>
                 <label className="form-label">Target Meet ID *</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g. NATIONALS-2027"
-                  value={clearanceMeetId}
-                  onChange={e => setClearanceMeetId(e.target.value)}
-                  required
-                  style={{
-                    borderRadius: '14px',
-                    background: 'rgba(10, 16, 30, 0.85)',
-                    border: clearanceMeetId ? '1px solid #34d399' : '1px solid var(--border-glass-bright)',
-                    fontFamily: 'var(--font-mono)'
-                  }}
-                />
-                {/* Quick-fill buttons */}
-                <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                  {['NATIONALS-2027', 'AFRICA-CHAMPS-2027', 'WORLD-ATHLETICS-2027'].map(m => (
-                    <button key={m} type="button" onClick={() => setClearanceMeetId(m)}
-                      className="badge badge-green"
-                      style={{ cursor: 'pointer', fontFamily: 'var(--font-mono)', textTransform: 'none', fontSize: '0.7rem' }}
-                    >{m}</button>
-                  ))}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <select
+                    className="form-input"
+                    value={['NATIONALS-2027', 'AFRICA-CHAMPS-2027', 'WORLD-ATHLETICS-2027'].includes(clearanceMeetId) ? clearanceMeetId : (clearanceMeetId ? 'CUSTOM' : '')}
+                    onChange={e => {
+                      if (e.target.value === 'CUSTOM') {
+                        setClearanceMeetId('');
+                      } else {
+                        setClearanceMeetId(e.target.value);
+                      }
+                    }}
+                    style={{
+                      borderRadius: '14px',
+                      background: 'rgba(10, 16, 30, 0.85)',
+                      border: clearanceMeetId ? '1px solid #34d399' : '1px solid var(--border-glass-bright)',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <option value="">-- Select Target Meet --</option>
+                    <option value="NATIONALS-2027">NATIONALS-2027 (South African National Championships)</option>
+                    <option value="AFRICA-CHAMPS-2027">AFRICA-CHAMPS-2027 (African Senior Athletics Championships)</option>
+                    <option value="WORLD-ATHLETICS-2027">WORLD-ATHLETICS-2027 (World Athletics Tour Qualifier)</option>
+                    <option value="CUSTOM">Type Custom Meet ID...</option>
+                  </select>
+
+                  {(!['NATIONALS-2027', 'AFRICA-CHAMPS-2027', 'WORLD-ATHLETICS-2027'].includes(clearanceMeetId)) && (
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="Type custom Meet ID (e.g. OLYMPICS-2028)"
+                      value={clearanceMeetId}
+                      onChange={e => setClearanceMeetId(e.target.value)}
+                      required
+                      style={{
+                        borderRadius: '12px',
+                        background: 'rgba(10, 16, 30, 0.85)',
+                        border: '1px solid var(--border-glass-bright)',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.88rem'
+                      }}
+                    />
+                  )}
+
+                  {/* Quick-fill buttons */}
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {['NATIONALS-2027', 'AFRICA-CHAMPS-2027', 'WORLD-ATHLETICS-2027'].map(m => (
+                      <button key={m} type="button" onClick={() => setClearanceMeetId(m)}
+                        className={`badge ${clearanceMeetId === m ? 'badge-cyan' : 'badge-green'}`}
+                        style={{ cursor: 'pointer', fontFamily: 'var(--font-mono)', textTransform: 'none', fontSize: '0.72rem' }}
+                      >{m}</button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

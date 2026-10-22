@@ -171,12 +171,20 @@ const INITIAL_OFFICIALS_LIST: OfficialInfo[] = [
     isAdmin: false,
     title: 'Regional Technical Delegate (Anvil Account #0)',
     addedTimestamp: Math.floor(Date.now() / 1000) - 86400 * 12
+  },
+  {
+    address: '0x5a2c6e79F7Ed85694CdB3AFa1a9ea9DD5195e905',
+    isAdmin: true,
+    title: 'Authorized Meet Official (Katlego MetaMask)',
+    addedTimestamp: Math.floor(Date.now() / 1000)
   }
 ];
 
 const OFFICIALS = new Set<string>([
   '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd',
-  '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+  '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  '0x5a2c6e79F7Ed85694CdB3AFa1a9ea9DD5195e905',
+  '0x5a2c6e79f7ed85694cdb3afa1a9ea9dd5195e905'
 ]);
 
 // ─────────────────────────────────────────────────────────
@@ -226,7 +234,7 @@ export function useWeb3Registry() {
             address: addr,
             isConnected: true,
             isOfficial: authorizedOfficials.has(addr.toLowerCase()) || authorizedOfficials.has(addr),
-            isAdmin: addr.toLowerCase() === '0xa8c2dc9ee3f1b48bc6fa397c49aec519e245e9fd',
+            isAdmin: addr.toLowerCase() === '0xa8c2dc9ee3f1b48bc6fa397c49aec519e245e9fd' || addr.toLowerCase() === '0x5a2c6e79f7ed85694cdb3afa1a9ea9dd5195e905',
             balance: '2.50 ETH',
             networkName: 'Ethereum Testnet'
           });

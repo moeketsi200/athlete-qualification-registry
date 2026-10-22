@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b1329" />
+      <stop offset="100%" stop-color="#050814" />
+    </linearGradient>
+
+    <!-- Border Glow Gradient matching the Navbar -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="50%" stop-color="#06b6d4" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+
+    <!-- Gold Medal Gradient -->
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="50%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <!-- Cyan Ribbon Accent Gradient -->
+    <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0891b2" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer Rounded Badge with Gradient Border -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="3" />
+
+  <!-- Inner Soft Glow -->
+  <circle cx="32" cy="25" r="16" fill="#06b6d4" opacity="0.15" />
+
+  <!-- Award Ribbons -->
+  <path d="M23 37 L21 53 L32 46 L43 53 L41 37" fill="url(#cyanGrad)" stroke="#0e7490" stroke-width="1.5" stroke-linejoin="round" />
+
+  <!-- Medal Outer Circle -->
+  <circle cx="32" cy="25" r="14" fill="url(#goldGrad)" stroke="#b45309" stroke-width="2" />
+
+  <!-- Inner Star / Laurels Emblem on Medal -->
+  <circle cx="32" cy="25" r="10" fill="#0b1329" />
+  <path d="M32 18 L34 22.5 L39 23 L35.2 26.5 L36.3 31.5 L32 28.8 L27.7 31.5 L28.8 26.5 L25 23 L30 22.5 Z" fill="url(#goldGrad)" />
+</svg>

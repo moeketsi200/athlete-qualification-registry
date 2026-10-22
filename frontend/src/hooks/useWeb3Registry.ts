@@ -163,7 +163,7 @@ const INITIAL_OFFICIALS_LIST: OfficialInfo[] = [
   {
     address: '0x5a2c6e79F7Ed85694CdB3AFa1a9ea9DD5195e905',
     isAdmin: true,
-    title: 'Contract Admin & Lead Meet Director (Katlego)',
+    title: 'Contract Admin & Lead Meet Director (Moeketsi)',
     addedTimestamp: Math.floor(Date.now() / 1000) - 86400 * 30
   },
   {

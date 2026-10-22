@@ -161,30 +161,30 @@ const INITIAL_STANDARDS: QualificationStandard[] = [
 
 const INITIAL_OFFICIALS_LIST: OfficialInfo[] = [
   {
-    address: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd',
+    address: '0x5a2c6e79F7Ed85694CdB3AFa1a9ea9DD5195e905',
     isAdmin: true,
-    title: 'Lead Meet Director & Contract Admin',
+    title: 'Contract Admin & Lead Meet Director (Katlego)',
     addedTimestamp: Math.floor(Date.now() / 1000) - 86400 * 30
+  },
+  {
+    address: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd',
+    isAdmin: false,
+    title: 'Regional Technical Delegate',
+    addedTimestamp: Math.floor(Date.now() / 1000) - 86400 * 20
   },
   {
     address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
     isAdmin: false,
-    title: 'Regional Technical Delegate (Anvil Account #0)',
+    title: 'Track Official (Anvil Account #0)',
     addedTimestamp: Math.floor(Date.now() / 1000) - 86400 * 12
-  },
-  {
-    address: '0x5a2c6e79F7Ed85694CdB3AFa1a9ea9DD5195e905',
-    isAdmin: true,
-    title: 'Authorized Meet Official (Katlego MetaMask)',
-    addedTimestamp: Math.floor(Date.now() / 1000)
   }
 ];
 
 const OFFICIALS = new Set<string>([
-  '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd',
-  '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
   '0x5a2c6e79F7Ed85694CdB3AFa1a9ea9DD5195e905',
-  '0x5a2c6e79f7ed85694cdb3afa1a9ea9dd5195e905'
+  '0x5a2c6e79f7ed85694cdb3afa1a9ea9dd5195e905',
+  '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd',
+  '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
 ]);
 
 // ─────────────────────────────────────────────────────────
@@ -193,7 +193,7 @@ const OFFICIALS = new Set<string>([
 
 export function useWeb3Registry() {
   const [wallet, setWallet] = useState<WalletState>({
-    address: '0xa8C2dC9EE3f1b48Bc6fA397C49Aec519E245e9Fd',
+    address: '0x5a2c6e79F7Ed85694CdB3AFa1a9ea9DD5195e905',
     isConnected: true,
     isOfficial: true,
     isAdmin: true,
@@ -289,7 +289,7 @@ export function useWeb3Registry() {
     setWallet(prev => ({
       ...prev,
       isOfficial: authorizedOfficials.has(address) || authorizedOfficials.has(address.toLowerCase()),
-      isAdmin: address.toLowerCase() === '0xa8c2dc9ee3f1b48bc6fa397c49aec519e245e9fd',
+      isAdmin: address.toLowerCase() === '0x5a2c6e79f7ed85694cdb3afa1a9ea9dd5195e905' || address.toLowerCase() === '0xa8c2dc9ee3f1b48bc6fa397c49aec519e245e9fd',
       address: address
     }));
   }, [authorizedOfficials]);

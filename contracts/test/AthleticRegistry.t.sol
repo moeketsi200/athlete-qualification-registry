@@ -331,4 +331,22 @@ contract AthleticRegistryTest is Test {
         vm.expectRevert(AthleticRegistry.AthleticRegistry__AthleteNotCleared.selector);
         registry.recordResult(athlete, "UNCLEARED-MEET", AthleticRegistry.EventType.ShotPut, 2145);
     }
+
+    // ─── ADMIN TRANSFER TESTS ────────────────────────────────────────
+
+    // TEST 26: Admin can transfer admin role
+    function testAdminCanTransferAdmin() public {
+        address newAdmin = makeAddr("katlegoAdmin");
+        vm.prank(admin);
+        registry.transferAdmin(newAdmin);
+        assertEq(registry.getAdmin(), newAdmin);
+        assertTrue(registry.isOfficial(newAdmin));
+    }
+
+    // TEST 27: Non-admin cannot transfer admin role
+    function testRevertsIfNonAdminTransfersAdmin() public {
+        vm.prank(badActor);
+        vm.expectRevert("Only admin");
+        registry.transferAdmin(badActor);
+    }
 }

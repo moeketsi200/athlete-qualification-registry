@@ -106,6 +106,7 @@ contract AthleticRegistry is IAthleticRegistry {
         address indexed athleteAddress, string targetMeetId, EventType indexed eventType, uint256 distanceInMeters
     );
     event StandardSet(string targetMeetId, EventType eventType, uint256 thresholdScaled);
+    event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);
 
     // --- Modifiers ---
     modifier onlyOfficial() {
@@ -144,6 +145,18 @@ contract AthleticRegistry is IAthleticRegistry {
             s_authorizedOfficials[_official] = false;
             emit OfficialRemoved(_official);
         }
+    }
+
+    function transferAdmin(address newAdmin) external onlyAdmin {
+        require(newAdmin != address(0), "Invalid Admin Address");
+        address oldAdmin = i_admin;
+        if (!s_authorizedOfficials[newAdmin]) {
+            s_authorizedOfficials[newAdmin] = true;
+            s_officials.push(newAdmin);
+            emit OfficialAdded(newAdmin);
+        }
+        i_admin = newAdmin;
+        emit AdminTransferred(oldAdmin, newAdmin);
     }
 
     // --- Athlete Registration ---

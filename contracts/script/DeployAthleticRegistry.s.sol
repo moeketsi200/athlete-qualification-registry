@@ -8,11 +8,12 @@ contract DeployAthleticRegistry is Script {
     function run() external returns (AthleticRegistry) {
         vm.startBroadcast();
         AthleticRegistry registry = new AthleticRegistry();
-        // Authorize Katlego's MetaMask wallet as an official
-        registry.addOfficial(0x5a2c6e79F7Ed85694CdB3AFa1a9ea9DD5195e905);
+        // Transfer Contract Admin to Katlego's MetaMask wallet
+        registry.transferAdmin(0x5a2c6e79F7Ed85694CdB3AFa1a9ea9DD5195e905);
         vm.stopBroadcast();
 
         console.log("AthleticRegistry deployed to:", address(registry));
+        console.log("Contract Admin transferred to:", registry.getAdmin());
         return registry;
     }
 }
